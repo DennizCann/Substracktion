@@ -35,6 +35,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -43,6 +45,8 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.text.withStyle
 import com.denizcan.substracktion.util.Language
 import com.denizcan.substracktion.util.UiText
 import com.denizcan.substracktion.viewmodel.AppViewModel
@@ -54,7 +58,8 @@ fun AuthScreen(
     onRegister: () -> Unit,
     language: Language,
     onLanguageChange: (Language) -> Unit,
-    viewModel: AppViewModel
+    viewModel: AppViewModel,
+    onShowPrivacyPolicy: () -> Unit
 ) {
     var showContent by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
@@ -153,14 +158,35 @@ fun AuthScreen(
         )
 
         // Alt bilgi metni
-        Text(
-            text = text.termsOfService,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-            fontSize = 12.sp,
+        Row(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 16.dp)
-        )
+                .padding(bottom = 16.dp),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            val privacyText = remember(language) { UiText.getPrivacyPolicyText(language) }
+            
+            Text(
+                text = buildAnnotatedString {
+                    append(text.byCreatingAccount)
+                    append(" ")
+                    withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) {
+                        append(privacyText.privacyPolicy)
+                    }
+                    append(" ")
+                    append(privacyText.and)
+                    append(" ")
+                    withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) {
+                        append(privacyText.termsOfService)
+                    }
+                },
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .clickable { onShowPrivacyPolicy() }
+                    .padding(horizontal = 16.dp)
+            )
+        }
     }
 }
 
@@ -284,6 +310,29 @@ private fun AnimatedAuthContent(
                         text = text.continueWithGoogle,
                         modifier = Modifier.padding(start = 8.dp),
                         fontSize = 16.sp
+                    )
+                }
+            }
+
+            // Google Butonu'ndan sonra ekleyelim
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(top = 16.dp)
+            ) {
+                Text(
+                    text = text.dontHaveAccount,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                )
+                
+                TextButton(
+                    onClick = onRegister,
+                    modifier = Modifier.padding(top = 4.dp)
+                ) {
+                    Text(
+                        text = text.register,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             }

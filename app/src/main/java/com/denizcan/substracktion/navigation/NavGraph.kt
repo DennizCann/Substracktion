@@ -1,6 +1,10 @@
 package com.denizcan.substracktion.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -54,6 +58,8 @@ fun NavGraph(
         }
 
         composable(Screen.Auth.route) {
+            var showPrivacyPolicy by rememberSaveable { mutableStateOf(false) }
+
             AuthScreen(
                 onEmailSignIn = {
                     navController.navigate(Screen.EmailSignIn.route)
@@ -64,8 +70,16 @@ fun NavGraph(
                 },
                 language = language,
                 onLanguageChange = { viewModel.setLanguage(it) },
-                viewModel = viewModel
+                viewModel = viewModel,
+                onShowPrivacyPolicy = { showPrivacyPolicy = true }
             )
+
+            if (showPrivacyPolicy) {
+                PrivacyPolicyDialog(
+                    onDismiss = { showPrivacyPolicy = false },
+                    language = language
+                )
+            }
         }
 
         composable(Screen.EmailSignIn.route) {

@@ -17,7 +17,8 @@ sealed class UiText {
         val confirmPassword: String,
         val termsOfService: String,
         val selectLanguage: String,
-        val continueWithGoogle: String
+        val continueWithGoogle: String,
+        val byCreatingAccount: String
     )
 
     data class EmailSignInText(
@@ -89,6 +90,15 @@ sealed class UiText {
         val backToHome: String
     )
 
+    data class PrivacyPolicyText(
+        val title: String,
+        val content: String,
+        val ok: String,
+        val privacyPolicy: String,
+        val termsOfService: String,
+        val and: String
+    )
+
     companion object {
         fun getAuthText(language: Language): AuthText {
             return when (language) {
@@ -108,7 +118,8 @@ sealed class UiText {
                     confirmPassword = "Confirm Password",
                     termsOfService = "By creating an account, you agree to our Terms of Service",
                     selectLanguage = "Select Language",
-                    continueWithGoogle = "Continue with Google"
+                    continueWithGoogle = "Continue with Google",
+                    byCreatingAccount = "By creating an account, you agree to our"
                 )
                 Language.TURKISH -> AuthText(
                     signIn = "Giriş Yap",
@@ -126,7 +137,8 @@ sealed class UiText {
                     confirmPassword = "Şifre Tekrar",
                     termsOfService = "Hesap oluşturarak kullanım koşullarını kabul etmiş olursunuz",
                     selectLanguage = "Dil Seçin",
-                    continueWithGoogle = "Google ile devam et"
+                    continueWithGoogle = "Google ile devam et",
+                    byCreatingAccount = "Hesap oluşturarak kabul etmiş olursunuz:"
                 )
             }
         }
@@ -310,6 +322,47 @@ sealed class UiText {
                     comingSoon = "Çok Yakında",
                     underConstruction = "Bu sayfa yapım aşamasında",
                     backToHome = "Ana Sayfaya Dön"
+                )
+            }
+        }
+
+        fun getPrivacyPolicyText(language: Language): PrivacyPolicyText {
+            return when (language) {
+                Language.ENGLISH -> PrivacyPolicyText(
+                    title = "Privacy & Terms",
+                    content = """
+                        We only collect essential information:
+                        • Email for authentication
+                        • Subscription data you provide
+                        
+                        Your data is:
+                        • Stored securely
+                        • Never shared with third parties
+                        • Only used to provide service
+                        • Deletable upon request
+                    """.trimIndent(),
+                    ok = "OK",
+                    privacyPolicy = "Privacy Policy",
+                    termsOfService = "Terms of Service",
+                    and = "and"
+                )
+                Language.TURKISH -> PrivacyPolicyText(
+                    title = "Gizlilik ve Koşullar",
+                    content = """
+                        Sadece gerekli bilgileri topluyoruz:
+                        • Kimlik doğrulama için e-posta
+                        • Sizin girdiğiniz abonelik verileri
+                        
+                        Verileriniz:
+                        • Güvenle saklanır
+                        • Üçüncü taraflarla paylaşılmaz
+                        • Sadece hizmet sunmak için kullanılır
+                        • İsteğiniz üzerine silinebilir
+                    """.trimIndent(),
+                    ok = "Tamam",
+                    privacyPolicy = "Gizlilik Politikası",
+                    termsOfService = "Kullanım Koşulları",
+                    and = "ve"
                 )
             }
         }

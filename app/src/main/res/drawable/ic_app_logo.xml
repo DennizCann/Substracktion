@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Arka plan daire -->
+    <path
+        android:fillColor="#F8F9FE"
+        android:pathData="M54,54m-40,0a40,40 0,1 1,80 0a40,40 0,1 1,-80 0"/>
+
+    <!-- Abonelik kartı şekli -->
+    <path
+        android:fillColor="#2D5AF8"
+        android:pathData="M34,38h40a6,6 0 0,1 6,6v20a6,6 0 0,1 -6,6h-40a6,6 0 0,1 -6,-6v-20a6,6 0 0,1 6,-6z"/>
+
+    <!-- Kart üzerindeki çip -->
+    <path
+        android:fillColor="#5773FF"
+        android:pathData="M38,46h10v6h-10z"/>
+
+    <!-- Takip/İzleme sembolü (tik işareti) -->
+    <path
+        android:strokeColor="#F8F9FE"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M44,58l6,6l12,-12"/>
+</vector> 

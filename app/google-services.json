@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "264028497581",
+    "project_id": "substraction-e534c",
+    "storage_bucket": "substraction-e534c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:264028497581:android:37269f90736c3e75cf4824",
+        "android_client_info": {
+          "package_name": "com.denizcan.substracktion"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "264028497581-ptb85gb9setdrt4ho4fujnukgnmjnrh3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.denizcan.substracktion",
+            "certificate_hash": "ef379b6f1eba41a49c896adf7ae3c0e119eae908"
+          }
+        },
+        {
+          "client_id": "264028497581-tc0jea0t7fpgefv5p6i0usu0p245hvgq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCOYyXRsqkznRBL_j86tn3Rb3yD59-O4LE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "264028497581-tc0jea0t7fpgefv5p6i0usu0p245hvgq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

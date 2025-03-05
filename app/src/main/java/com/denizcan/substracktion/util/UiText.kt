@@ -99,6 +99,16 @@ sealed class UiText {
         val and: String
     )
 
+    data class NotificationsText(
+        val title: String,
+        val noNotifications: String,
+        val markAllRead: String,
+        val justNow: String,
+        val minutesAgo: String,
+        val hoursAgo: String,
+        val daysAgo: String
+    )
+
     companion object {
         fun getAuthText(language: Language): AuthText {
             return when (language) {
@@ -158,7 +168,7 @@ sealed class UiText {
                     continueWithGoogle = "Continue with Google",
                     resetPassword = "Reset Password",
                     resetPasswordSuccess = "Password Reset",
-                    resetPasswordEmailSent = "Password reset instructions have been sent to your email",
+                    resetPasswordEmailSent = "We'll send a password reset link to:\n%s",
                     send = "Send",
                     cancel = "Cancel",
                     ok = "OK"
@@ -176,7 +186,7 @@ sealed class UiText {
                     continueWithGoogle = "Google ile devam et",
                     resetPassword = "Şifre Sıfırla",
                     resetPasswordSuccess = "Şifre Sıfırlama",
-                    resetPasswordEmailSent = "Şifre sıfırlama talimatları e-posta adresinize gönderildi",
+                    resetPasswordEmailSent = "Şifre sıfırlama bağlantısını şu adrese göndereceğiz:\n%s",
                     send = "Gönder",
                     cancel = "İptal",
                     ok = "Tamam"
@@ -363,6 +373,29 @@ sealed class UiText {
                     privacyPolicy = "Gizlilik Politikası",
                     termsOfService = "Kullanım Koşulları",
                     and = "ve"
+                )
+            }
+        }
+
+        fun getNotificationsText(language: Language): NotificationsText {
+            return when (language) {
+                Language.ENGLISH -> NotificationsText(
+                    title = "Notifications",
+                    noNotifications = "No notifications",
+                    markAllRead = "Mark all as read",
+                    justNow = "Just now",
+                    minutesAgo = "%d minutes ago",
+                    hoursAgo = "%d hours ago",
+                    daysAgo = "%d days ago"
+                )
+                Language.TURKISH -> NotificationsText(
+                    title = "Bildirimler",
+                    noNotifications = "Bildirim bulunmuyor",
+                    markAllRead = "Tümünü okundu işaretle",
+                    justNow = "Şimdi",
+                    minutesAgo = "%d dakika önce",
+                    hoursAgo = "%d saat önce",
+                    daysAgo = "%d gün önce"
                 )
             }
         }

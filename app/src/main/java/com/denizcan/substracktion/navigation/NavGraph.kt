@@ -100,7 +100,8 @@ fun NavGraph(
                 language = language,
                 isLoading = isLoading.value,
                 error = error.value,
-                resetPasswordSuccess = resetPasswordSuccess.value
+                resetPasswordSuccess = resetPasswordSuccess.value,
+                viewModel = viewModel
             )
         }
 
@@ -163,6 +164,29 @@ fun NavGraph(
 
         composable(Screen.Analytics.route) {
             AnalyticsScreen(
+                onBackToHome = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
+                    }
+                },
+                language = language
+            )
+        }
+
+        // Profil ve Ayarlar sayfaları için route'lar
+        composable(Screen.Profile.route) {
+            ProfileScreen(
+                onBackToHome = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
+                    }
+                },
+                language = language
+            )
+        }
+
+        composable(Screen.Settings.route) {
+            SettingsScreen(
                 onBackToHome = {
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }

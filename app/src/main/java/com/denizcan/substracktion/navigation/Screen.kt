@@ -9,5 +9,7 @@ sealed class Screen(val route: String) {
     object Subscriptions : Screen("subscriptions")
     object Calendar : Screen("calendar")
     object Analytics : Screen("analytics")
+    object Profile : Screen("profile")
+    object Settings : Screen("settings")
     // Diğer ekranları daha sonra buraya ekleyeceğiz
 } 

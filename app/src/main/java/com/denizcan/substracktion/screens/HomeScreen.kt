@@ -19,6 +19,7 @@ import com.denizcan.substracktion.navigation.Screen
 import com.denizcan.substracktion.util.Language
 import com.denizcan.substracktion.util.UiText
 import kotlinx.coroutines.launch
+import com.denizcan.substracktion.components.NotificationsMenu
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,6 +36,7 @@ fun HomeScreen(
     val scope = rememberCoroutineScope()
     
     var selectedTab by remember { mutableStateOf(Screen.Home.route) }
+    var showNotifications by remember { mutableStateOf(false) }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -56,13 +58,23 @@ fun HomeScreen(
                     icon = { Icon(Icons.Default.Person, contentDescription = drawerText.profile) },
                     label = { Text(drawerText.profile) },
                     selected = false,
-                    onClick = { /* Profil sayfasına git */ }
+                    onClick = { 
+                        scope.launch {
+                            drawerState.close()
+                            onNavigate(Screen.Profile.route)
+                        }
+                    }
                 )
                 NavigationDrawerItem(
                     icon = { Icon(Icons.Default.Settings, contentDescription = drawerText.settings) },
                     label = { Text(drawerText.settings) },
                     selected = false,
-                    onClick = { /* Ayarlar sayfasına git */ }
+                    onClick = { 
+                        scope.launch {
+                            drawerState.close()
+                            onNavigate(Screen.Settings.route)
+                        }
+                    }
                 )
                 NavigationDrawerItem(
                     icon = { Icon(Icons.Default.ExitToApp, contentDescription = drawerText.signOut) },
@@ -102,12 +114,22 @@ fun HomeScreen(
                         }
                     },
                     actions = {
-                        IconButton(onClick = { /* Bildirimleri göster */ }) {
+                        IconButton(
+                            onClick = { showNotifications = true }
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.Notifications,
                                 contentDescription = drawerText.notifications
                             )
                         }
+                        
+                        NotificationsMenu(
+                            expanded = showNotifications,
+                            onDismiss = { showNotifications = false },
+                            notifications = emptyList(), // Şimdilik boş liste
+                            onMarkAllRead = { /* Tümünü okundu işaretle */ },
+                            language = language
+                        )
                     }
                 )
             },

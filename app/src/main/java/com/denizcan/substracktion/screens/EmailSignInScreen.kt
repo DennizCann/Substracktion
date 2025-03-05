@@ -22,10 +22,12 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.denizcan.substracktion.R
 import com.denizcan.substracktion.util.Language
 import com.denizcan.substracktion.util.UiText
+import com.denizcan.substracktion.viewmodel.AppViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,7 +39,8 @@ fun EmailSignInScreen(
     language: Language,
     isLoading: Boolean,
     error: String?,
-    resetPasswordSuccess: Boolean
+    resetPasswordSuccess: Boolean,
+    viewModel: AppViewModel
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -55,17 +58,25 @@ fun EmailSignInScreen(
         }
     }
 
-    // Başarılı şifre sıfırlama dialog'u
+    // Şifre sıfırlama başarılı dialog'u
     if (showSuccessDialog) {
         AlertDialog(
-            onDismissRequest = { showSuccessDialog = false },
+            onDismissRequest = { 
+                showSuccessDialog = false
+                viewModel.clearResetPasswordSuccess()
+            },
             title = { Text(text.resetPasswordSuccess) },
-            text = { Text(text.resetPasswordEmailSent) },
+            text = { 
+                Text(
+                    text = text.resetPasswordEmailSent.format(resetEmail),
+                    textAlign = TextAlign.Center
+                ) 
+            },
             confirmButton = {
                 TextButton(
                     onClick = { 
                         showSuccessDialog = false
-                        resetEmail = "" // E-posta alanını temizle
+                        viewModel.clearResetPasswordSuccess()
                     }
                 ) {
                     Text(text.ok)

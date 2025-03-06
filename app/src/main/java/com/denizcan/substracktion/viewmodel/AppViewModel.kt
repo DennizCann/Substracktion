@@ -197,24 +197,4 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     fun clearResetPasswordSuccess() {
         _resetPasswordSuccess.value = false
     }
-
-    /**
-     * Email adresini maskeler
-     * Örnek: test@gmail.com -> t***@gmail.com
-     */
-    fun maskEmail(email: String): String {
-        return try {
-            val parts = email.split("@")
-            if (parts.size != 2) return email
-            
-            val name = parts[0]
-            val domain = parts[1]
-            
-            if (name.length <= 1) return email
-            
-            "${name[0]}${"*".repeat(name.length - 1)}@$domain"
-        } catch (e: Exception) {
-            email // Herhangi bir hata durumunda orijinal email'i döndür
-        }
-    }
 } 

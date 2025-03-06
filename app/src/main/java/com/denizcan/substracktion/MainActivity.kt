@@ -1,6 +1,5 @@
 package com.denizcan.substracktion
 
-import android.app.Activity
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -44,7 +43,7 @@ class MainActivity : ComponentActivity() {
                     val launcher = rememberLauncherForActivityResult(
                         contract = ActivityResultContracts.StartActivityForResult()
                     ) { result ->
-                        if (result.resultCode == Activity.RESULT_OK) {
+                        if (result.resultCode == RESULT_OK) {
                             val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
                             try {
                                 val account = task.getResult(ApiException::class.java)

@@ -1,0 +1,12 @@
+<resources>
+    <!-- Profile Screen -->
+    <string name="profile">Profil</string>
+    <string name="back">Geri</string>
+    <string name="language">Dil</string>
+    <string name="currency">Para Birimi</string>
+    <string name="notifications">Bildirimler</string>
+    <string name="notifications_enabled">Bildirimleri Etkinleştir</string>
+    <string name="save_changes">Değişiklikleri Kaydet</string>
+    <string name="select_language">Dil Seçin</string>
+    <string name="select_currency">Para Birimi Seçin</string>
+</resources> 

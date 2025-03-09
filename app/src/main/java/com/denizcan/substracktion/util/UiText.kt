@@ -63,7 +63,13 @@ sealed class UiText {
         val settings: String,
         val signOut: String,
         val menu: String,
-        val notifications: String
+        val notifications: String,
+        val emailNotifications: String,
+        val country: String,
+        val currency: String,
+        val deleteAccount: String,
+        val privacyPolicy: String,
+        val termsOfService: String
     )
 
     data class WelcomeText(
@@ -107,6 +113,27 @@ sealed class UiText {
         val minutesAgo: String,
         val hoursAgo: String,
         val daysAgo: String
+    )
+
+    data class ProfileText(
+        val regionSettings: String,
+        val region: String,
+        val currency: String,
+        val notificationSettings: String,
+        val notifications: String,
+        val emailNotifications: String,
+        val appSettings: String,
+        val languageSettings: String,
+        val darkMode: String
+    )
+
+    data class CommonText(
+        val back: String,
+        val cancel: String,
+        val save: String,
+        val delete: String,
+        val edit: String,
+        val ok: String
     )
 
     companion object {
@@ -243,14 +270,26 @@ sealed class UiText {
                     settings = "Settings",
                     signOut = "Sign Out",
                     menu = "Menu",
-                    notifications = "Notifications"
+                    notifications = "Notifications",
+                    emailNotifications = "Email Notifications",
+                    country = "Country",
+                    currency = "Currency",
+                    deleteAccount = "Delete Account",
+                    privacyPolicy = "Privacy Policy",
+                    termsOfService = "Terms of Service"
                 )
                 Language.TURKISH -> DrawerText(
                     profile = "Profil",
                     settings = "Ayarlar",
                     signOut = "Çıkış Yap",
                     menu = "Menü",
-                    notifications = "Bildirimler"
+                    notifications = "Bildirimler",
+                    emailNotifications = "E-posta Bildirimleri",
+                    country = "Ülke",
+                    currency = "Para Birimi",
+                    deleteAccount = "Hesabı Sil",
+                    privacyPolicy = "Gizlilik Politikası",
+                    termsOfService = "Kullanım Koşulları"
                 )
             }
         }
@@ -396,6 +435,54 @@ sealed class UiText {
                     minutesAgo = "%d dakika önce",
                     hoursAgo = "%d saat önce",
                     daysAgo = "%d gün önce"
+                )
+            }
+        }
+
+        fun getProfileText(language: Language): ProfileText {
+            return when (language) {
+                Language.TURKISH -> ProfileText(
+                    regionSettings = "Bölge Ayarları",
+                    region = "Bölge",
+                    currency = "Para Birimi",
+                    notificationSettings = "Bildirim Ayarları",
+                    notifications = "Bildirimler",
+                    emailNotifications = "E-posta Bildirimleri",
+                    appSettings = "Uygulama Ayarları",
+                    languageSettings = "Dil",
+                    darkMode = "Karanlık Mod"
+                )
+                Language.ENGLISH -> ProfileText(
+                    regionSettings = "Region Settings",
+                    region = "Region",
+                    currency = "Currency",
+                    notificationSettings = "Notification Settings",
+                    notifications = "Notifications",
+                    emailNotifications = "Email Notifications",
+                    appSettings = "App Settings",
+                    languageSettings = "Language",
+                    darkMode = "Dark Mode"
+                )
+            }
+        }
+
+        fun getCommonText(language: Language): CommonText {
+            return when (language) {
+                Language.ENGLISH -> CommonText(
+                    back = "Back",
+                    cancel = "Cancel",
+                    save = "Save",
+                    delete = "Delete",
+                    edit = "Edit",
+                    ok = "OK"
+                )
+                Language.TURKISH -> CommonText(
+                    back = "Geri",
+                    cancel = "İptal",
+                    save = "Kaydet",
+                    delete = "Sil",
+                    edit = "Düzenle",
+                    ok = "Tamam"
                 )
             }
         }

@@ -12,6 +12,10 @@ import com.denizcan.substracktion.screens.*
 import com.denizcan.substracktion.viewmodel.AppViewModel
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.denizcan.substracktion.viewmodel.ProfileViewModel
+import com.denizcan.substracktion.viewmodel.ProfileViewModelFactory
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun NavGraph(
@@ -175,13 +179,15 @@ fun NavGraph(
 
         // Profil ve Ayarlar sayfaları için route'lar
         composable(Screen.Profile.route) {
+            val profileViewModel: ProfileViewModel = viewModel(
+                factory = ProfileViewModelFactory(LocalContext.current)
+            )
+            
             ProfileScreen(
-                onBackToHome = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Home.route) { inclusive = true }
-                    }
-                },
-                language = language
+                onBackToHome = { navController.navigate(Screen.Home.route) },
+                viewModel = profileViewModel,
+                language = language,
+                onDeleteAccountClick = { /* TODO */ }
             )
         }
 

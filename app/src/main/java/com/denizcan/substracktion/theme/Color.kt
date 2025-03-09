@@ -1,4 +1,4 @@
-package com.denizcan.substracktion.ui.theme
+package com.denizcan.substracktion.screens.theme
 
 import androidx.compose.ui.graphics.Color
 

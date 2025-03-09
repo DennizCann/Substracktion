@@ -197,4 +197,9 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     fun clearResetPasswordSuccess() {
         _resetPasswordSuccess.value = false
     }
+
+    fun updateLanguage(language: Language) {
+        _language.value = language
+        languageManager.saveLanguage(language)
+    }
 } 

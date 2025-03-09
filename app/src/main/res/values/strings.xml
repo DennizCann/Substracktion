@@ -1,4 +1,14 @@
 <resources>
     <string name="app_name">Substracktion</string>
     <string name="web_client_id">264028497581-tc0jea0t7fpgefv5p6i0usu0p245hvgq.apps.googleusercontent.com</string>
+    <!-- Profile Screen -->
+    <string name="profile">Profile</string>
+    <string name="back">Back</string>
+    <string name="language">Language</string>
+    <string name="currency">Currency</string>
+    <string name="notifications">Notifications</string>
+    <string name="notifications_enabled">Enable Notifications</string>
+    <string name="save_changes">Save Changes</string>
+    <string name="select_language">Select Language</string>
+    <string name="select_currency">Select Currency</string>
 </resources>

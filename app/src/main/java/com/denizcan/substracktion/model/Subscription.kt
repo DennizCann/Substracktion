@@ -9,8 +9,6 @@ data class Subscription(
     val name: String,                    // Üyelik adı (Netflix, Spotify vb.)
     val category: SubscriptionCategory,  // Üyelik kategorisi
     val plan: SubscriptionPlan,         // Seçilen plan bilgileri
-    val startDate: Date,                // Üyelik başlangıç tarihi
-    val userId: String? = null          // Kullanıcıya özel üyelikler için kullanıcı ID'si
 )
 
 data class SubscriptionPlan(
@@ -46,7 +44,8 @@ data class UserSubscription(
     val category: SubscriptionCategory,  
     val subscriptionHistory: List<SubscriptionPeriod>, // Üyelik geçmişi
     val userId: String,                 
-    val isActive: Boolean = true        // Üyelik aktif mi?
+    val isActive: Boolean = true,        // Üyelik aktif mi?
+    val plan: SubscriptionPlan,         // Seçilen plan bilgileri
 )
 
 // Üyelik dönemlerini takip etmek için

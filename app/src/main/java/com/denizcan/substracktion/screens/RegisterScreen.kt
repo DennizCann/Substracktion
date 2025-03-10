@@ -29,9 +29,11 @@ import com.denizcan.substracktion.util.UiText
 fun RegisterScreen(
     onRegister: (name: String, email: String, password: String) -> Unit,
     onBackClick: () -> Unit,
+    onRegistrationSuccess: () -> Unit,
     language: Language,
     isLoading: Boolean,
-    error: String?
+    error: String?,
+    verificationEmailSent: Boolean
 ) {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -39,6 +41,7 @@ fun RegisterScreen(
     var passwordConfirm by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var showContent by remember { mutableStateOf(false) }
+    var isEmailValid by remember { mutableStateOf(true) }
     val focusManager = LocalFocusManager.current
     val text = remember(language) { UiText.getRegisterText(language) }
 
@@ -114,8 +117,23 @@ fun RegisterScreen(
 
                     OutlinedTextField(
                         value = email,
-                        onValueChange = { email = it },
+                        onValueChange = { 
+                            email = it
+                            isEmailValid = EmailValidator.isValid(email)
+                        },
                         label = { Text(text.email) },
+                        isError = !isEmailValid && email.isNotEmpty(),
+                        supportingText = {
+                            if (!isEmailValid && email.isNotEmpty()) {
+                                Text(
+                                    text = if (language == Language.TURKISH)
+                                        "Geçerli bir e-posta adresi giriniz"
+                                    else
+                                        "Please enter a valid email address",
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        },
                         singleLine = true,
                         leadingIcon = {
                             Icon(
@@ -217,10 +235,11 @@ fun RegisterScreen(
                             .height(50.dp),
                         shape = MaterialTheme.shapes.medium,
                         enabled = !isLoading && 
-                                password == passwordConfirm && 
-                                password.isNotEmpty() && 
+                                name.isNotEmpty() && 
                                 email.isNotEmpty() && 
-                                name.isNotEmpty()
+                                password.isNotEmpty() && 
+                                isEmailValid &&
+                                password == passwordConfirm
                     ) {
                         Text(text.register)
                     }
@@ -231,6 +250,34 @@ fun RegisterScreen(
                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                     )
                 }
+            }
+
+            // Doğrulama e-postası gönderildiğinde dialog göster
+            if (verificationEmailSent) {
+                AlertDialog(
+                    onDismissRequest = { onRegistrationSuccess() },
+                    title = {
+                        Text(
+                            if (language == Language.TURKISH)
+                                "Hesap Oluşturuldu"
+                            else
+                                "Account Created"
+                        )
+                    },
+                    text = {
+                        Text(
+                            if (language == Language.TURKISH)
+                                "Hesabınız oluşturuldu. Lütfen e-posta adresinize gönderilen doğrulama bağlantısına tıklayın ve ardından giriş yapın."
+                            else
+                                "Your account has been created. Please check your email for verification link and then sign in."
+                        )
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { onRegistrationSuccess() }) {
+                            Text(if (language == Language.TURKISH) "Tamam" else "OK")
+                        }
+                    }
+                )
             }
         }
     }

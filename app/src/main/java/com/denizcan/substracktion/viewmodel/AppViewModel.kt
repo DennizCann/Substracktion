@@ -17,10 +17,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.UserProfileChangeRequest
+import com.google.firebase.firestore.FirebaseFirestore
 
 class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val languageManager = LanguageManager(application)
-    
+
     private val _language = mutableStateOf(languageManager.getLanguage())
     val language: State<Language> = _language
 
@@ -45,11 +48,32 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val _resetPasswordSuccess = MutableStateFlow(false)
     val resetPasswordSuccess = _resetPasswordSuccess.asStateFlow()
 
+    private val auth = FirebaseAuth.getInstance()
+
+    // E-posta doğrulama durumu
+    private val _isEmailVerified = MutableStateFlow(false)
+
+    // Doğrulama e-postası gönderme durumu
+    private val _verificationEmailSent = MutableStateFlow(false)
+    val verificationEmailSent = _verificationEmailSent.asStateFlow()
+
     init {
         // Başlangıçta mevcut kullanıcıyı kontrol edelim
         val currentUser = authRepository.currentUser
         println("DEBUG: Current user: ${currentUser?.email}, UID: ${currentUser?.uid}, Name: ${currentUser?.displayName}")
         _userName.value = currentUser?.displayName
+
+        // Kullanıcının e-posta doğrulama durumunu kontrol et
+        auth.currentUser?.let { user ->
+            // Sadece e-posta/şifre ile giriş yapan kullanıcılar için kontrol et
+            val providers = user.providerData.map { it.providerId }
+            if (providers.contains("password")) {
+                _isEmailVerified.value = user.isEmailVerified
+            } else {
+                // Google ile giriş yapan kullanıcılar için doğrulanmış kabul et
+                _isEmailVerified.value = true
+            }
+        }
     }
 
     fun initGoogleSignIn(context: Context) {
@@ -57,60 +81,52 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             .requestIdToken(context.getString(R.string.web_client_id))
             .requestEmail()
             .build()
-        
+
         // Her seferinde yeni bir oturum başlat
         googleSignInClient = GoogleSignIn.getClient(context, gso)
         // Mevcut oturumu kapat
         googleSignInClient?.signOut()
-        
+
         println("DEBUG: Google Sign In initialized with web client ID: ${context.getString(R.string.web_client_id)}")
     }
 
-    // Google Sign-In butonuna tıklandığında çağrılacak fonksiyon
-    fun prepareGoogleSignIn() {
-        viewModelScope.launch {
-            _isLoading.value = true
-            try {
-                // Mevcut Google oturumunu kapat
-                googleSignInClient?.signOut()?.await()
-                // Hesap seçiciyi sıfırla
-                googleSignInClient?.revokeAccess()?.await()
-            } catch (e: Exception) {
-                println("DEBUG: Failed to prepare Google Sign In: ${e.message}")
-                // Hata olsa bile devam et
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
-
-    fun setLanguage(newLanguage: Language) {
-        _language.value = newLanguage
-        languageManager.saveLanguage(newLanguage)
-    }
 
     fun signInWithEmail(email: String, password: String) = viewModelScope.launch {
         _isLoading.value = true
         _error.value = null
         _loginSuccess.value = false
 
-        authRepository.signInWithEmail(email, password)
-            .onSuccess {
-                // Kullanıcı bilgilerini yenile
-                authRepository.auth.currentUser?.reload()?.await()
-                val user = authRepository.auth.currentUser
-                println("DEBUG: Sign in successful - Email: ${user?.email}, UID: ${user?.uid}, Name: ${user?.displayName}")
-                _userName.value = user?.displayName ?: "Kullanıcı"  // userName'i güncelle
+        try {
+            val result = auth.signInWithEmailAndPassword(email, password).await()
+            result.user?.let { user ->
+                // Önce e-posta doğrulama kontrolü yap
+                if (!user.isEmailVerified) {
+                    _error.value = if (language.value == Language.TURKISH)
+                        "Lütfen e-posta adresinizi doğrulayın. Doğrulama bağlantısı gönderildi."
+                    else
+                        "Please verify your email address. Verification link has been sent."
+                    // Yeni doğrulama e-postası gönder
+                    sendVerificationEmail()
+                    // Giriş başarısız
+                    _loginSuccess.value = false
+                    return@launch
+                }
+
+                // E-posta doğrulanmışsa giriş işlemine devam et
+                user.reload()?.await()
+                val userInfo = auth.currentUser
+                println("DEBUG: Sign in successful - Email: ${userInfo?.email}, UID: ${userInfo?.uid}, Name: ${userInfo?.displayName}")
+                _userName.value = userInfo?.displayName ?: "Kullanıcı"
                 _isUserSignedIn.value = true
                 _loginSuccess.value = true
             }
-            .onFailure { e ->
-                println("DEBUG: Sign in failed - ${e.message}")
-                _error.value = e.message
-                _loginSuccess.value = false
-            }
-
-        _isLoading.value = false
+        } catch (e: Exception) {
+            println("DEBUG: Sign in failed - ${e.message}")
+            _error.value = e.message
+            _loginSuccess.value = false
+        } finally {
+            _isLoading.value = false
+        }
     }
 
     fun signInWithGoogle(idToken: String) = viewModelScope.launch {
@@ -120,6 +136,8 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
         authRepository.signInWithGoogle(idToken)
             .onSuccess {
+                // Google ile giriş yapan kullanıcılar için doğrulanmış kabul et
+                _isEmailVerified.value = true
                 // Kullanıcı bilgilerini yenile
                 authRepository.auth.currentUser?.reload()?.await()
                 val user = authRepository.auth.currentUser
@@ -140,26 +158,32 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     fun register(name: String, email: String, password: String) = viewModelScope.launch {
         _isLoading.value = true
         _error.value = null
-        _loginSuccess.value = false
+        _verificationEmailSent.value = false
 
-        authRepository.register(name, email, password)
-            .onSuccess {
-                // Kullanıcı bilgilerini yenile
-                authRepository.auth.currentUser?.reload()?.await()
-                // Güncel kullanıcı bilgisini al
-                val user = authRepository.auth.currentUser
-                println("DEBUG: Registration successful - Email: ${user?.email}, UID: ${user?.uid}, Name: ${user?.displayName}")
-                _userName.value = user?.displayName ?: name  // Önce Firebase'den al, yoksa girilen ismi kullan
-                _isUserSignedIn.value = true
-                _loginSuccess.value = true
-            }
-            .onFailure { e ->
-                println("DEBUG: Registration failed - ${e.message}")
-                _error.value = e.message
-                _loginSuccess.value = false
-            }
+        try {
+            val result = auth.createUserWithEmailAndPassword(email, password).await()
+            result.user?.let { user ->
+                user.updateProfile(
+                    UserProfileChangeRequest.Builder()
+                        .setDisplayName(name)
+                        .build()
+                ).await()
 
-        _isLoading.value = false
+                // Doğrulama e-postası gönder
+                user.sendEmailVerification().await()
+
+                // Otomatik giriş yapılmasını engelle
+                auth.signOut()
+
+                // Başarılı kayıt bildirimi
+                _verificationEmailSent.value = true
+            }
+        } catch (e: Exception) {
+            println("DEBUG: Registration failed - ${e.message}")
+            _error.value = e.message
+        } finally {
+            _isLoading.value = false
+        }
     }
 
     fun signOut() {
@@ -168,6 +192,13 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         println("DEBUG: After sign out - User: ${user?.email}")
         _isUserSignedIn.value = false
         _userName.value = null
+        // Çıkış yapınca state'i sıfırla
+        _verificationEmailSent.value = false
+    }
+
+    // RegisterScreen'den giriş ekranına yönlendirildiğinde çağrılacak yeni fonksiyon
+    fun clearVerificationState() {
+        _verificationEmailSent.value = false
     }
 
     fun getGoogleSignInIntent() = googleSignInClient?.signInIntent
@@ -180,7 +211,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         _isLoading.value = true
         _error.value = null
         _resetPasswordSuccess.value = false
-        
+
         authRepository.resetPassword(email)
             .onSuccess {
                 println("DEBUG: Password reset email sent to $email")
@@ -190,7 +221,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 println("DEBUG: Password reset failed - ${e.message}")
                 _error.value = e.message
             }
-        
+
         _isLoading.value = false
     }
 
@@ -202,4 +233,33 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         _language.value = language
         languageManager.saveLanguage(language)
     }
-} 
+
+    fun saveFcmToken(token: String) {
+        viewModelScope.launch {
+            try {
+                val currentUser = authRepository.currentUser ?: return@launch
+
+                FirebaseFirestore.getInstance()
+                    .collection("users")
+                    .document(currentUser.uid)
+                    .update("fcmToken", token)
+                    .await()
+
+                println("FCM token başarıyla kaydedildi: $token")
+            } catch (e: Exception) {
+                println("FCM token kaydedilirken hata oluştu: ${e.message}")
+                _error.value = e.message
+            }
+        }
+    }
+
+    // Doğrulama e-postası gönder
+    fun sendVerificationEmail() {
+        auth.currentUser?.sendEmailVerification()?.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                _verificationEmailSent.value = true
+            }
+        }
+    }
+
+}

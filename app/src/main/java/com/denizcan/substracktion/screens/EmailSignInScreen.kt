@@ -46,6 +46,7 @@ fun EmailSignInScreen(
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var showResetDialog by remember { mutableStateOf(false) }
+    var isResetEmailValid by remember { mutableStateOf(true) }
     var resetEmail by remember { mutableStateOf("") }
     var showSuccessDialog by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
@@ -88,14 +89,33 @@ fun EmailSignInScreen(
     // Şifre sıfırlama dialog'u
     if (showResetDialog) {
         AlertDialog(
-            onDismissRequest = { showResetDialog = false },
+            onDismissRequest = { 
+                showResetDialog = false 
+                resetEmail = ""
+                isResetEmailValid = true
+            },
             title = { Text(text.resetPassword) },
             text = {
                 OutlinedTextField(
                     value = resetEmail,
-                    onValueChange = { resetEmail = it },
+                    onValueChange = { 
+                        resetEmail = it
+                        isResetEmailValid = EmailValidator.isValid(resetEmail)
+                    },
                     label = { Text(text.email) },
                     singleLine = true,
+                    isError = !isResetEmailValid && resetEmail.isNotEmpty(),
+                    supportingText = {
+                        if (!isResetEmailValid && resetEmail.isNotEmpty()) {
+                            Text(
+                                text = if (language == Language.TURKISH)
+                                    "Geçerli bir e-posta adresi giriniz"
+                                else
+                                    "Please enter a valid email address",
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Email,
                         imeAction = ImeAction.Done
@@ -108,7 +128,7 @@ fun EmailSignInScreen(
                         onResetPassword(resetEmail)
                         showResetDialog = false
                     },
-                    enabled = resetEmail.isNotEmpty()
+                    enabled = resetEmail.isNotEmpty() && isResetEmailValid
                 ) {
                     Text(text.send)
                 }
@@ -117,7 +137,8 @@ fun EmailSignInScreen(
                 TextButton(
                     onClick = { 
                         showResetDialog = false
-                        resetEmail = "" // İptal edildiğinde e-posta alanını temizle
+                        resetEmail = ""
+                        isResetEmailValid = true
                     }
                 ) {
                     Text(text.cancel)
@@ -261,21 +282,6 @@ fun EmailSignInScreen(
                         enabled = !isLoading && email.isNotEmpty() && password.isNotEmpty()
                     ) {
                         Text(text.signIn)
-                    }
-
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    Row(
-                        modifier = Modifier.padding(bottom = 32.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = text.dontHaveAccount,
-                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
-                        )
-                        TextButton(onClick = onNavigateToRegister) {
-                            Text(text.register)
-                        }
                     }
                 }
             }

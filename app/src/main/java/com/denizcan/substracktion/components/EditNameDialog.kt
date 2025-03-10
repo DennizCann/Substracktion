@@ -9,24 +9,39 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.denizcan.substracktion.util.Language
 
 @Composable
 fun EditNameDialog(
     currentName: String,
     onDismiss: () -> Unit,
-    onNameChange: (String) -> Unit
+    onNameChange: (String) -> Unit,
+    language: Language
 ) {
     var name by remember { mutableStateOf(currentName) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("İsminizi Değiştirin") },
+        title = { 
+            Text(
+                if (language == Language.TURKISH) 
+                    "İsminizi Düzenleyin" 
+                else 
+                    "Edit Your Name"
+            )
+        },
         text = {
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("İsim") },
-                singleLine = true
+                label = { 
+                    Text(
+                        if (language == Language.TURKISH) 
+                            "İsim" 
+                        else 
+                            "Name"
+                    )
+                }
             )
         },
         confirmButton = {
@@ -38,12 +53,12 @@ fun EditNameDialog(
                     }
                 }
             ) {
-                Text("Kaydet")
+                Text(if (language == Language.TURKISH) "Kaydet" else "Save")
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("İptal")
+                Text(if (language == Language.TURKISH) "İptal" else "Cancel")
             }
         }
     )

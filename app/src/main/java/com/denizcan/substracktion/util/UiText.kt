@@ -59,17 +59,16 @@ sealed class UiText {
     )
 
     data class DrawerText(
+        val home: String,
+        val subscriptions: String,
+        val calendar: String,
+        val analytics: String,
         val profile: String,
-        val settings: String,
         val signOut: String,
-        val menu: String,
-        val notifications: String,
-        val emailNotifications: String,
         val country: String,
         val currency: String,
-        val deleteAccount: String,
-        val privacyPolicy: String,
-        val termsOfService: String
+        val language: String,
+        val deleteAccount: String
     )
 
     data class WelcomeText(
@@ -265,31 +264,29 @@ sealed class UiText {
 
         fun getDrawerText(language: Language): DrawerText {
             return when (language) {
-                Language.ENGLISH -> DrawerText(
-                    profile = "Profile",
-                    settings = "Settings",
-                    signOut = "Sign Out",
-                    menu = "Menu",
-                    notifications = "Notifications",
-                    emailNotifications = "Email Notifications",
-                    country = "Country",
-                    currency = "Currency",
-                    deleteAccount = "Delete Account",
-                    privacyPolicy = "Privacy Policy",
-                    termsOfService = "Terms of Service"
-                )
                 Language.TURKISH -> DrawerText(
-                    profile = "Profil",
-                    settings = "Ayarlar",
+                    home = "Ana Sayfa",
+                    subscriptions = "Abonelikler",
+                    calendar = "Takvim",
+                    analytics = "Analiz",
+                    profile = "Profil ve Ayarlar",
                     signOut = "Çıkış Yap",
-                    menu = "Menü",
-                    notifications = "Bildirimler",
-                    emailNotifications = "E-posta Bildirimleri",
                     country = "Ülke",
                     currency = "Para Birimi",
-                    deleteAccount = "Hesabı Sil",
-                    privacyPolicy = "Gizlilik Politikası",
-                    termsOfService = "Kullanım Koşulları"
+                    language = "Dil",
+                    deleteAccount = "Hesabı Sil"
+                )
+                Language.ENGLISH -> DrawerText(
+                    home = "Home",
+                    subscriptions = "Subscriptions",
+                    calendar = "Calendar",
+                    analytics = "Analytics",
+                    profile = "Profile & Settings",
+                    signOut = "Sign Out",
+                    country = "Country",
+                    currency = "Currency",
+                    language = "Language",
+                    deleteAccount = "Delete Account"
                 )
             }
         }

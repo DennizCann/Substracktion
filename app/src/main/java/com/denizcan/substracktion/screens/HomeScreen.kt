@@ -9,7 +9,6 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Subscriptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,6 +19,8 @@ import com.denizcan.substracktion.util.Language
 import com.denizcan.substracktion.util.UiText
 import kotlinx.coroutines.launch
 import com.denizcan.substracktion.components.NotificationsMenu
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,11 +39,13 @@ fun HomeScreen(
     var selectedTab by remember { mutableStateOf(Screen.Home.route) }
     var showNotifications by remember { mutableStateOf(false) }
 
+
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet(
-                modifier = Modifier.width(200.dp),
+                modifier = Modifier.width(300.dp),
                 drawerContainerColor = MaterialTheme.colorScheme.surface,
             ) {
                 Spacer(modifier = Modifier.height(16.dp))
@@ -55,29 +58,22 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 NavigationDrawerItem(
-                    icon = { Icon(Icons.Default.Person, contentDescription = drawerText.profile) },
-                    label = { Text(drawerText.profile) },
+                    label = { 
+                        Text(
+                            text = drawerText.profile,
+                            maxLines = 1
+                        )
+                    },
                     selected = false,
-                    onClick = { 
+                    onClick = {
                         scope.launch {
                             drawerState.close()
                             onNavigate(Screen.Profile.route)
                         }
-                    }
+                    },
+                    icon = { Icon(Icons.Default.Person, contentDescription = null) }
                 )
                 NavigationDrawerItem(
-                    icon = { Icon(Icons.Default.Settings, contentDescription = drawerText.settings) },
-                    label = { Text(drawerText.settings) },
-                    selected = false,
-                    onClick = { 
-                        scope.launch {
-                            drawerState.close()
-                            onNavigate(Screen.Settings.route)
-                        }
-                    }
-                )
-                NavigationDrawerItem(
-                    icon = { Icon(Icons.Default.ExitToApp, contentDescription = drawerText.signOut) },
                     label = { Text(drawerText.signOut) },
                     selected = false,
                     onClick = {
@@ -85,7 +81,8 @@ fun HomeScreen(
                             drawerState.close()
                             onSignOut()
                         }
-                    }
+                    },
+                    icon = { Icon(Icons.Default.ExitToApp, contentDescription = null) }
                 )
             }
         }
@@ -109,27 +106,29 @@ fun HomeScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Menu,
-                                contentDescription = drawerText.menu
+                                contentDescription = if (language == Language.TURKISH) "Menü" else "Menu"
                             )
                         }
                     },
                     actions = {
-                        IconButton(
-                            onClick = { showNotifications = true }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Notifications,
-                                contentDescription = drawerText.notifications
+                        Box {
+                            IconButton(
+                                onClick = { showNotifications = true }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Notifications,
+                                    contentDescription = if (language == Language.TURKISH) "Bildirimler" else "Notifications"
+                                )
+                            }
+                            
+                            NotificationsMenu(
+                                expanded = showNotifications,
+                                onDismiss = { showNotifications = false },
+                                notifications = emptyList(),
+                                onMarkAllRead = { /* Tümünü okundu işaretle */ },
+                                language = language
                             )
                         }
-                        
-                        NotificationsMenu(
-                            expanded = showNotifications,
-                            onDismiss = { showNotifications = false },
-                            notifications = emptyList(), // Şimdilik boş liste
-                            onMarkAllRead = { /* Tümünü okundu işaretle */ },
-                            language = language
-                        )
                     }
                 )
             },

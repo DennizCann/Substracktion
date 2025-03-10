@@ -15,7 +15,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.denizcan.substracktion.viewmodel.ProfileViewModel
 import com.denizcan.substracktion.viewmodel.ProfileViewModelFactory
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import com.denizcan.substracktion.util.Language
 
 @Composable
 fun NavGraph(
@@ -57,7 +60,10 @@ fun NavGraph(
                 onNavigateToNext = {
                     navController.navigate(Screen.Auth.route)
                 },
-                language = language
+                language = language,
+                onLanguageChange = { newLanguage ->
+                    viewModel.updateLanguage(newLanguage)
+                }
             )
         }
 
@@ -72,16 +78,57 @@ fun NavGraph(
                 onRegister = {
                     navController.navigate(Screen.Register.route)
                 },
-                language = language,
-                onLanguageChange = { viewModel.setLanguage(it) },
-                viewModel = viewModel,
-                onShowPrivacyPolicy = { showPrivacyPolicy = true }
+                onPrivacyPolicyClick = {
+                    showPrivacyPolicy = true  // Dialog'u göster
+                },
+                language = language
             )
 
+            // Gizlilik Politikası Dialog'u
             if (showPrivacyPolicy) {
-                PrivacyPolicyDialog(
-                    onDismiss = { showPrivacyPolicy = false },
-                    language = language
+                AlertDialog(
+                    onDismissRequest = { showPrivacyPolicy = false },
+                    title = {
+                        Text(
+                            if (language == Language.TURKISH)
+                                "Gizlilik Politikası ve Kullanım Koşulları"
+                            else
+                                "Privacy Policy and Terms of Service"
+                        )
+                    },
+                    text = {
+                        Text(
+                            if (language == Language.TURKISH)
+                                "Bu uygulama, aboneliklerinizi takip etmenize yardımcı olmak için tasarlanmıştır. " +
+                                "Topladığımız veriler:\n\n" +
+                                "• E-posta adresiniz ve adınız (kimlik doğrulama için)\n" +
+                                "• Abonelik bilgileriniz (ücret, tarih, kategori)\n" +
+                                "• Uygulama tercihleri (dil, bildirim ayarları)\n\n" +
+                                "Verileriniz:\n" +
+                                "• Sadece sizin görüntülemeniz için saklanır\n" +
+                                "• Üçüncü taraflarla paylaşılmaz\n" +
+                                "• Google Firebase altyapısında güvenle depolanır\n" +
+                                "• İstediğiniz zaman hesabınızı ve tüm verilerinizi silebilirsiniz\n\n" +
+                                "Uygulamayı kullanarak bu koşulları kabul etmiş olursunuz."
+                            else
+                                "This application is designed to help you track your subscriptions. " +
+                                "Data we collect:\n\n" +
+                                "• Your email and name (for authentication)\n" +
+                                "• Subscription information (cost, date, category)\n" +
+                                "• App preferences (language, notification settings)\n\n" +
+                                "Your data:\n" +
+                                "• Is stored for your viewing only\n" +
+                                "• Is not shared with third parties\n" +
+                                "• Is securely stored on Google Firebase infrastructure\n" +
+                                "• Can be deleted along with your account at any time\n\n" +
+                                "By using the application, you accept these terms."
+                        )
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { showPrivacyPolicy = false }) {
+                            Text(if (language == Language.TURKISH) "Tamam" else "OK")
+                        }
+                    }
                 )
             }
         }
@@ -110,6 +157,8 @@ fun NavGraph(
         }
 
         composable(Screen.Register.route) {
+            val verificationEmailSent = viewModel.verificationEmailSent.collectAsState()
+            
             RegisterScreen(
                 onRegister = { name, email, password ->
                     viewModel.register(name, email, password)
@@ -117,9 +166,17 @@ fun NavGraph(
                 onBackClick = {
                     navController.navigateUp()
                 },
+                onRegistrationSuccess = {
+                    // State'i temizle ve giriş ekranına yönlendir
+                    viewModel.clearVerificationState()
+                    navController.navigate(Screen.EmailSignIn.route) {
+                        popUpTo(Screen.Register.route) { inclusive = true }
+                    }
+                },
                 language = language,
                 isLoading = isLoading.value,
-                error = error.value
+                error = error.value,
+                verificationEmailSent = verificationEmailSent.value
             )
         }
 
@@ -180,25 +237,21 @@ fun NavGraph(
         // Profil ve Ayarlar sayfaları için route'lar
         composable(Screen.Profile.route) {
             val profileViewModel: ProfileViewModel = viewModel(
-                factory = ProfileViewModelFactory(LocalContext.current)
+                factory = ProfileViewModelFactory()
             )
             
             ProfileScreen(
                 onBackToHome = { navController.navigate(Screen.Home.route) },
                 viewModel = profileViewModel,
                 language = language,
-                onDeleteAccountClick = { /* TODO */ }
-            )
-        }
-
-        composable(Screen.Settings.route) {
-            SettingsScreen(
-                onBackToHome = {
-                    navController.navigate(Screen.Home.route) {
+                onLanguageChange = { newLanguage ->
+                    viewModel.updateLanguage(newLanguage)
+                },
+                onDeleteAccountClick = {
+                    navController.navigate(Screen.Auth.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
                     }
-                },
-                language = language
+                }
             )
         }
     }

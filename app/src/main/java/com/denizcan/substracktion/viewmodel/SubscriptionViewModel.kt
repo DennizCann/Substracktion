@@ -4,13 +4,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.denizcan.substracktion.model.*
 import com.denizcan.substracktion.repository.SubscriptionRepository
+import com.denizcan.substracktion.repository.UserRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class SubscriptionViewModel(
-    private val repository: SubscriptionRepository = SubscriptionRepository()
+    private val subscriptionRepository: SubscriptionRepository = SubscriptionRepository(),
+    private val userRepository: UserRepository = UserRepository()
 ) : ViewModel() {
     // UI State'leri
+    private val _userCountry = MutableStateFlow<String>("TR") // Varsayılan
+    val userCountry = _userCountry.asStateFlow()
+
     private val _services = MutableStateFlow<List<Service>>(emptyList())
     val services = _services.asStateFlow()
 
@@ -27,14 +32,23 @@ class SubscriptionViewModel(
     val error = _error.asStateFlow()
 
     init {
-        // Başlangıçta servisleri ve kullanıcının üyeliklerini yükle
+        loadUserCountry()
         loadServices()
         loadUserSubscriptions()
     }
 
+    private fun loadUserCountry() {
+        viewModelScope.launch {
+            userRepository.getUserProfile()
+                .collect { user ->
+                    _userCountry.value = user?.country ?: "TR"
+                }
+        }
+    }
+
     private fun loadServices() {
         viewModelScope.launch {
-            repository.getServices()
+            subscriptionRepository.getServices()
                 .catch { e -> _error.value = e.message }
                 .collect { services ->
                     _services.value = services
@@ -44,7 +58,7 @@ class SubscriptionViewModel(
 
     private fun loadUserSubscriptions() {
         viewModelScope.launch {
-            repository.getUserSubscriptions()
+            subscriptionRepository.getUserSubscriptions()
                 .catch { e -> _error.value = e.message }
                 .collect { subscriptions ->
                     _userSubscriptions.value = subscriptions
@@ -54,7 +68,7 @@ class SubscriptionViewModel(
 
     fun loadServicePlans(serviceId: String) {
         viewModelScope.launch {
-            repository.getServicePlans(serviceId)
+            subscriptionRepository.getServicePlans(serviceId)
                 .catch { e -> _error.value = e.message }
                 .collect { plans ->
                     _selectedServicePlans.value = plans
@@ -66,7 +80,7 @@ class SubscriptionViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                repository.addSubscription(subscription)
+                subscriptionRepository.addSubscription(subscription)
                 _error.value = null
             } catch (e: Exception) {
                 _error.value = e.message
@@ -80,7 +94,7 @@ class SubscriptionViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                repository.updateSubscription(subscription)
+                subscriptionRepository.updateSubscription(subscription)
                 _error.value = null
             } catch (e: Exception) {
                 _error.value = e.message
@@ -94,7 +108,7 @@ class SubscriptionViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                repository.deleteSubscription(subscriptionId)
+                subscriptionRepository.deleteSubscription(subscriptionId)
                 _error.value = null
             } catch (e: Exception) {
                 _error.value = e.message
@@ -102,5 +116,10 @@ class SubscriptionViewModel(
                 _isLoading.value = false
             }
         }
+    }
+
+    // Seçili ülke için plan fiyatını al
+    fun getPriceForCountry(plan: ServicePlan): Price? {
+        return plan.prices[userCountry.value]
     }
 } 

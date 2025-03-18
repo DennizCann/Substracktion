@@ -17,7 +17,12 @@ import com.denizcan.substracktion.viewmodel.ProfileViewModelFactory
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.navigation.NavType
 import com.denizcan.substracktion.util.Language
+import com.denizcan.substracktion.screens.SubscriptionsScreen
+import com.denizcan.substracktion.screens.ServiceDetailScreen
+import androidx.navigation.navArgument
+import com.denizcan.substracktion.navigation.Screen  // Screen sınıfını import et
 
 @Composable
 fun NavGraph(
@@ -203,7 +208,24 @@ fun NavGraph(
         composable(Screen.Subscriptions.route) {
             SubscriptionsScreen(
                 onBackToHome = { navController.navigateUp() },
+                onServiceClick = { serviceId ->
+                    navController.navigate(Screen.ServiceDetail.createRoute(serviceId))
+                },
                 language = language
+            )
+        }
+
+        // Servis detay sayfası
+        composable(
+            route = Screen.ServiceDetail.route,
+            arguments = listOf(
+                navArgument("serviceId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val serviceId = backStackEntry.arguments?.getString("serviceId") ?: return@composable
+            ServiceDetailScreen(
+                serviceId = serviceId,
+                onBack = { navController.navigateUp() }
             )
         }
 

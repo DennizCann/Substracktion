@@ -11,5 +11,8 @@ sealed class Screen(val route: String) {
     object Analytics : Screen("analytics")
     object Calendar : Screen("calendar")
     object Profile : Screen("profile")
+    object ServiceDetail : Screen("service_detail/{serviceId}") {
+        fun createRoute(serviceId: String) = "service_detail/$serviceId"
+    }
     // Diğer ekranları daha sonra buraya ekleyeceğiz
 } 

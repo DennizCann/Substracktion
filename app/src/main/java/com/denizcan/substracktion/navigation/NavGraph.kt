@@ -13,7 +13,6 @@ import com.denizcan.substracktion.viewmodel.AppViewModel
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.denizcan.substracktion.viewmodel.ProfileViewModel
 import com.denizcan.substracktion.viewmodel.ProfileViewModelFactory
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
@@ -27,16 +26,18 @@ fun NavGraph(
     viewModel: AppViewModel,
     onGoogleSignInClick: () -> Unit
 ) {
+    // State'leri en üstte collect edelim
     val language = viewModel.language.value
     val isLoading = viewModel.isLoading.collectAsState()
     val error = viewModel.error.collectAsState()
     val isUserSignedIn = viewModel.isUserSignedIn.collectAsState()
     val loginSuccess = viewModel.loginSuccess.collectAsState()
+    val userName = viewModel.userName.collectAsState()  // userName'i burada collect edelim
 
     // Kullanıcı giriş yapmışsa direkt ana ekrana yönlendir
     LaunchedEffect(isUserSignedIn.value) {
         if (isUserSignedIn.value) {
-            navController.navigate(Screen.Home.route) {
+            navController.navigate(Screen.Home.route) {  // Subscriptions -> Home
                 popUpTo(Screen.Welcome.route) { inclusive = true }
             }
         }
@@ -45,8 +46,8 @@ fun NavGraph(
     // Başarılı giriş/kayıt sonrası ana ekrana yönlendir
     LaunchedEffect(loginSuccess.value) {
         if (loginSuccess.value) {
-            navController.navigate(Screen.Home.route) {
-                popUpTo(Screen.Auth.route) { inclusive = true }
+            navController.navigate(Screen.Home.route) {  // Subscriptions -> Home
+                popUpTo(Screen.Welcome.route) { inclusive = true }
             }
         }
     }
@@ -61,9 +62,7 @@ fun NavGraph(
                     navController.navigate(Screen.Auth.route)
                 },
                 language = language,
-                onLanguageChange = { newLanguage ->
-                    viewModel.updateLanguage(newLanguage)
-                }
+                onLanguageChange = { viewModel.updateLanguage(it) }
             )
         }
 
@@ -158,7 +157,7 @@ fun NavGraph(
 
         composable(Screen.Register.route) {
             val verificationEmailSent = viewModel.verificationEmailSent.collectAsState()
-            
+
             RegisterScreen(
                 onRegister = { name, email, password ->
                     viewModel.register(name, email, password)
@@ -180,76 +179,68 @@ fun NavGraph(
             )
         }
 
+        // Ana sayfa (navigasyon için)
         composable(Screen.Home.route) {
-            val userName = viewModel.userName.collectAsState()
             HomeScreen(
                 onSignOut = {
-                    navController.navigate(Screen.Auth.route) {
-                        popUpTo(Screen.Home.route) { inclusive = true }
-                    }
                     viewModel.signOut()
+                    navController.navigate(Screen.Welcome.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
                 },
                 userName = userName.value,
                 language = language,
                 onNavigate = { route ->
                     navController.navigate(route) {
-                        launchSingleTop = true
-                        restoreState = true
+                        // Geri tuşuna basıldığında Home'a dön
+                        popUpTo(Screen.Home.route)
                     }
                 }
             )
         }
 
-        // Yeni sayfalar için route'lar
+        // Üyelikler listesi sayfası
         composable(Screen.Subscriptions.route) {
             SubscriptionsScreen(
-                onBackToHome = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Home.route) { inclusive = true }
-                    }
-                },
+                onBackToHome = { navController.navigateUp() },
                 language = language
             )
         }
 
-        composable(Screen.Calendar.route) {
-            CalendarScreen(
-                onBackToHome = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Home.route) { inclusive = true }
-                    }
-                },
+        // Yeni üyelik ekleme sayfası
+        composable(Screen.Add.route) {
+            AddSubscriptionScreen(
+                onBackToHome = { navController.navigateUp() },
                 language = language
             )
         }
 
+        // Analiz sayfası
         composable(Screen.Analytics.route) {
             AnalyticsScreen(
-                onBackToHome = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Home.route) { inclusive = true }
-                    }
-                },
+                onBackToHome = { navController.navigateUp() },
+                language = language
+            )
+        }
+
+        // Takvim sayfası
+        composable(Screen.Calendar.route) {
+            CalendarScreen(
+                onBackToHome = { navController.navigateUp() },
                 language = language
             )
         }
 
         // Profil ve Ayarlar sayfaları için route'lar
         composable(Screen.Profile.route) {
-            val profileViewModel: ProfileViewModel = viewModel(
-                factory = ProfileViewModelFactory()
-            )
-            
             ProfileScreen(
-                onBackToHome = { navController.navigate(Screen.Home.route) },
-                viewModel = profileViewModel,
+                onBackToHome = { navController.navigateUp() },
+                viewModel = viewModel(factory = ProfileViewModelFactory()),
                 language = language,
-                onLanguageChange = { newLanguage ->
-                    viewModel.updateLanguage(newLanguage)
-                },
+                onLanguageChange = { viewModel.updateLanguage(it) },
                 onDeleteAccountClick = {
-                    navController.navigate(Screen.Auth.route) {
-                        popUpTo(Screen.Home.route) { inclusive = true }
+                    navController.navigate(Screen.Welcome.route) {
+                        popUpTo(0) { inclusive = true }
                     }
                 }
             )

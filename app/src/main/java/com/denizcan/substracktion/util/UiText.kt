@@ -83,8 +83,8 @@ sealed class UiText {
     }
 
     data class BottomNavText(
-        val home: String,
         val subscriptions: String,
+        val add: String,
         val calendar: String,
         val analytics: String
     )
@@ -322,14 +322,14 @@ sealed class UiText {
         fun getBottomNavText(language: Language): BottomNavText {
             return when (language) {
                 Language.ENGLISH -> BottomNavText(
-                    home = "Home",
                     subscriptions = "Subscriptions",
+                    add = "Add",
                     calendar = "Calendar",
                     analytics = "Analytics"
                 )
                 Language.TURKISH -> BottomNavText(
-                    home = "Ana Sayfa",
-                    subscriptions = "Abonelikler",
+                    subscriptions = "Üyelikler",
+                    add = "Ekle",
                     calendar = "Takvim",
                     analytics = "Analiz"
                 )

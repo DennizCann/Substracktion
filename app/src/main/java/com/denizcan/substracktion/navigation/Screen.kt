@@ -6,9 +6,10 @@ sealed class Screen(val route: String) {
     object EmailSignIn : Screen("email_sign_in")
     object Register : Screen("register")
     object Home : Screen("home")
-    object Profile : Screen("profile")
     object Subscriptions : Screen("subscriptions")
-    object Calendar : Screen("calendar")
+    object Add : Screen("add")
     object Analytics : Screen("analytics")
+    object Calendar : Screen("calendar")
+    object Profile : Screen("profile")
     // Diğer ekranları daha sonra buraya ekleyeceğiz
 } 

@@ -229,9 +229,9 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         _resetPasswordSuccess.value = false
     }
 
-    fun updateLanguage(language: Language) {
-        _language.value = language
-        languageManager.saveLanguage(language)
+    fun updateLanguage(newLanguage: Language) {
+        _language.value = newLanguage
+        languageManager.saveLanguage(newLanguage)
     }
 
     fun saveFcmToken(token: String) {

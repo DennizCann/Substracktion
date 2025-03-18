@@ -4,11 +4,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Construction
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -18,7 +15,7 @@ import com.denizcan.substracktion.util.UiText
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SubscriptionsScreen(
+fun AddSubscriptionScreen(
     onBackToHome: () -> Unit,
     language: Language
 ) {
@@ -28,7 +25,7 @@ fun SubscriptionsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(bottomNavText.subscriptions) },
+                title = { Text(bottomNavText.add) },
                 navigationIcon = {
                     IconButton(onClick = onBackToHome) {
                         Icon(

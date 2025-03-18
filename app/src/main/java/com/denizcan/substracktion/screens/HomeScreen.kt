@@ -5,13 +5,16 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Subscriptions
+import androidx.compose.material.icons.filled.ViewList
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.denizcan.substracktion.navigation.Screen
@@ -19,8 +22,6 @@ import com.denizcan.substracktion.util.Language
 import com.denizcan.substracktion.util.UiText
 import kotlinx.coroutines.launch
 import com.denizcan.substracktion.components.NotificationsMenu
-
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,10 +37,8 @@ fun HomeScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     
-    var selectedTab by remember { mutableStateOf(Screen.Home.route) }
+    var selectedTab by rememberSaveable { mutableStateOf(Screen.Home.route) }
     var showNotifications by remember { mutableStateOf(false) }
-
-
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -134,42 +133,24 @@ fun HomeScreen(
             },
             bottomBar = {
                 NavigationBar {
-                    NavigationBarItem(
-                        selected = selectedTab == Screen.Home.route,
-                        onClick = { 
-                            selectedTab = Screen.Home.route
-                            onNavigate(Screen.Home.route)
-                        },
-                        icon = { Icon(Icons.Default.Home, contentDescription = bottomNavText.home) },
-                        label = { Text(bottomNavText.home) }
-                    )
-                    NavigationBarItem(
-                        selected = selectedTab == Screen.Subscriptions.route,
-                        onClick = { 
-                            selectedTab = Screen.Subscriptions.route
-                            onNavigate(Screen.Subscriptions.route)
-                        },
-                        icon = { Icon(Icons.Default.Subscriptions, contentDescription = bottomNavText.subscriptions) },
-                        label = { Text(bottomNavText.subscriptions) }
-                    )
-                    NavigationBarItem(
-                        selected = selectedTab == Screen.Calendar.route,
-                        onClick = { 
-                            selectedTab = Screen.Calendar.route
-                            onNavigate(Screen.Calendar.route)
-                        },
-                        icon = { Icon(Icons.Default.CalendarMonth, contentDescription = bottomNavText.calendar) },
-                        label = { Text(bottomNavText.calendar) }
-                    )
-                    NavigationBarItem(
-                        selected = selectedTab == Screen.Analytics.route,
-                        onClick = { 
-                            selectedTab = Screen.Analytics.route
-                            onNavigate(Screen.Analytics.route)
-                        },
-                        icon = { Icon(Icons.Default.Analytics, contentDescription = bottomNavText.analytics) },
-                        label = { Text(bottomNavText.analytics) }
-                    )
+                    listOf(
+                        Triple(Screen.Add.route, Icons.Default.Add, bottomNavText.add),
+                        Triple(Screen.Subscriptions.route, Icons.Default.ViewList, bottomNavText.subscriptions),
+                        Triple(Screen.Analytics.route, Icons.Default.Analytics, bottomNavText.analytics),
+                        Triple(Screen.Calendar.route, Icons.Default.CalendarMonth, bottomNavText.calendar)
+                    ).forEach { (route, icon, label) ->
+                        NavigationBarItem(
+                            selected = selectedTab == route,
+                            onClick = { 
+                                if (selectedTab != route) {
+                                    selectedTab = route
+                                    onNavigate(route)
+                                }
+                            },
+                            icon = { Icon(icon, contentDescription = label) },
+                            label = { Text(label) }
+                        )
+                    }
                 }
             }
         ) { paddingValues ->
@@ -178,8 +159,87 @@ fun HomeScreen(
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
-                // İçerik buraya gelecek
+                // Ana sayfa boş olacak, sadece navigasyon için kullanılacak
             }
         }
     }
-} 
+}
+
+@Composable
+private fun SubscriptionsContent() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        // Başlık
+        Text(
+            text = "Aktif Üyelikler",
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        // Geçici olarak örnek üyelikler
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
+        ) {
+            ListItem(
+                headlineContent = { Text("Netflix") },
+                supportingContent = { Text("Premium Plan") },
+                trailingContent = { Text("₺89.99/ay") },
+                leadingContent = {
+                    Icon(
+                        imageVector = Icons.Default.PlayArrow,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            )
+        }
+
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
+        ) {
+            ListItem(
+                headlineContent = { Text("Spotify") },
+                supportingContent = { Text("Aile Paketi") },
+                trailingContent = { Text("₺49.99/ay") },
+                leadingContent = {
+                    Icon(
+                        imageVector = Icons.Default.MusicNote,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            )
+        }
+
+        // Toplam tutar
+        Spacer(modifier = Modifier.height(16.dp))
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer
+            )
+        ) {
+            ListItem(
+                headlineContent = { 
+                    Text(
+                        "Toplam Aylık",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                },
+                trailingContent = { 
+                    Text(
+                        "₺139.98",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+            )
+        }
+    }
+}

@@ -32,7 +32,7 @@ fun NavGraph(
     onGoogleSignInClick: () -> Unit
 ) {
     // State'leri en üstte collect edelim
-    val language = viewModel.language.value
+    val language = viewModel.language.collectAsState()
     val isLoading = viewModel.isLoading.collectAsState()
     val error = viewModel.error.collectAsState()
     val isUserSignedIn = viewModel.isUserSignedIn.collectAsState()
@@ -66,7 +66,7 @@ fun NavGraph(
                 onNavigateToNext = {
                     navController.navigate(Screen.Auth.route)
                 },
-                language = language,
+                language = language.value,
                 onLanguageChange = { viewModel.updateLanguage(it) }
             )
         }
@@ -85,7 +85,7 @@ fun NavGraph(
                 onPrivacyPolicyClick = {
                     showPrivacyPolicy = true  // Dialog'u göster
                 },
-                language = language
+                language = language.value
             )
 
             // Gizlilik Politikası Dialog'u
@@ -94,7 +94,7 @@ fun NavGraph(
                     onDismissRequest = { showPrivacyPolicy = false },
                     title = {
                         Text(
-                            if (language == Language.TURKISH)
+                            if (language.value == Language.TURKISH)
                                 "Gizlilik Politikası ve Kullanım Koşulları"
                             else
                                 "Privacy Policy and Terms of Service"
@@ -102,7 +102,7 @@ fun NavGraph(
                     },
                     text = {
                         Text(
-                            if (language == Language.TURKISH)
+                            if (language.value == Language.TURKISH)
                                 "Bu uygulama, aboneliklerinizi takip etmenize yardımcı olmak için tasarlanmıştır. " +
                                 "Topladığımız veriler:\n\n" +
                                 "• E-posta adresiniz ve adınız (kimlik doğrulama için)\n" +
@@ -130,7 +130,7 @@ fun NavGraph(
                     },
                     confirmButton = {
                         TextButton(onClick = { showPrivacyPolicy = false }) {
-                            Text(if (language == Language.TURKISH) "Tamam" else "OK")
+                            Text(if (language.value == Language.TURKISH) "Tamam" else "OK")
                         }
                     }
                 )
@@ -152,7 +152,7 @@ fun NavGraph(
                 onBackClick = {
                     navController.navigateUp()
                 },
-                language = language,
+                language = language.value,
                 isLoading = isLoading.value,
                 error = error.value,
                 resetPasswordSuccess = resetPasswordSuccess.value,
@@ -177,7 +177,7 @@ fun NavGraph(
                         popUpTo(Screen.Register.route) { inclusive = true }
                     }
                 },
-                language = language,
+                language = language.value,
                 isLoading = isLoading.value,
                 error = error.value,
                 verificationEmailSent = verificationEmailSent.value
@@ -194,11 +194,17 @@ fun NavGraph(
                     }
                 },
                 userName = userName.value,
-                language = language,
+                language = language.value,
                 onNavigate = { route ->
                     navController.navigate(route) {
-                        // Geri tuşuna basıldığında Home'a dön
-                        popUpTo(Screen.Home.route)
+                        // Önceki rotayı stack'ten sil
+                        popUpTo(Screen.Home.route) {
+                            saveState = true
+                        }
+                        // Aynı rotaya tekrar gidilebilsin
+                        launchSingleTop = true
+                        // Navigasyon state'ini koru
+                        restoreState = true
                     }
                 }
             )
@@ -211,21 +217,20 @@ fun NavGraph(
                 onServiceClick = { serviceId ->
                     navController.navigate(Screen.ServiceDetail.createRoute(serviceId))
                 },
-                language = language
+                language = language.value
             )
         }
 
         // Servis detay sayfası
         composable(
             route = Screen.ServiceDetail.route,
-            arguments = listOf(
-                navArgument("serviceId") { type = NavType.StringType }
-            )
+            arguments = listOf(navArgument("serviceId") { type = NavType.StringType })
         ) { backStackEntry ->
             val serviceId = backStackEntry.arguments?.getString("serviceId") ?: return@composable
             ServiceDetailScreen(
                 serviceId = serviceId,
-                onBack = { navController.navigateUp() }
+                onBack = { navController.popBackStack() },
+                language = language.value
             )
         }
 
@@ -233,7 +238,7 @@ fun NavGraph(
         composable(Screen.Add.route) {
             AddSubscriptionScreen(
                 onBackToHome = { navController.navigateUp() },
-                language = language
+                language = language.value
             )
         }
 
@@ -241,7 +246,7 @@ fun NavGraph(
         composable(Screen.Analytics.route) {
             AnalyticsScreen(
                 onBackToHome = { navController.navigateUp() },
-                language = language
+                language = language.value
             )
         }
 
@@ -249,7 +254,7 @@ fun NavGraph(
         composable(Screen.Calendar.route) {
             CalendarScreen(
                 onBackToHome = { navController.navigateUp() },
-                language = language
+                language = language.value
             )
         }
 
@@ -258,7 +263,7 @@ fun NavGraph(
             ProfileScreen(
                 onBackToHome = { navController.navigateUp() },
                 viewModel = viewModel(factory = ProfileViewModelFactory()),
-                language = language,
+                language = language.value,
                 onLanguageChange = { viewModel.updateLanguage(it) },
                 onDeleteAccountClick = {
                     navController.navigate(Screen.Welcome.route) {

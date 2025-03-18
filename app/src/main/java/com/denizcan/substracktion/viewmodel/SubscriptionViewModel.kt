@@ -41,7 +41,8 @@ class SubscriptionViewModel(
         viewModelScope.launch {
             userRepository.getUserProfile()
                 .collect { user ->
-                    _userCountry.value = user?.country ?: "TR"
+                    // Firestore'dan gelen ülke kodunu büyük harfe çevir (standartlaştırma)
+                    _userCountry.value = user?.country?.uppercase() ?: "TR"
                 }
         }
     }
@@ -71,7 +72,12 @@ class SubscriptionViewModel(
             subscriptionRepository.getServicePlans(serviceId)
                 .catch { e -> _error.value = e.message }
                 .collect { plans ->
-                    _selectedServicePlans.value = plans
+                    // Sadece kullanıcının ülkesinde geçerli olan planları filtrele
+                    val countryCode = userCountry.value
+                    val availablePlans = plans.filter { plan ->
+                        plan.prices.containsKey(countryCode)
+                    }
+                    _selectedServicePlans.value = availablePlans
                 }
         }
     }

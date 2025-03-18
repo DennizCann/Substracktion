@@ -1,0 +1,39 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Kullanıcı doğrulaması için yardımcı fonksiyon
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Kullanıcının kendi dökümanına erişimi için yardımcı fonksiyon
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Services koleksiyonu için kurallar
+    match /services/{serviceId} {
+      allow read: if isAuthenticated();  // Tüm giriş yapmış kullanıcılar okuyabilir
+      allow write: if false;  // Sadece admin yazabilir
+      
+      // Alt koleksiyonlar (planlar) için de aynı kurallar
+      match /plans/{planId} {
+        allow read: if isAuthenticated();
+        allow write: if false;
+      }
+    }
+
+    // Kullanıcı profilleri için kurallar
+    match /users/{userId} {
+      allow create: if isOwner(userId);
+      allow read, update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+    }
+
+    // Kullanıcı üyelikleri için kurallar
+    match /user_subscriptions/{subscriptionId} {
+      allow read, write: if isAuthenticated() && 
+                           request.auth.uid == resource.data.userId;
+    }
+  }
+} 

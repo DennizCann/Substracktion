@@ -25,6 +25,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import com.denizcan.substracktion.util.CountryCurrencyManager
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import com.denizcan.substracktion.components.CountryPickerDialog
 
 // Tüm dialog state'lerini tek bir sealed class'ta toplayabiliriz
 sealed class ProfileDialogState {
@@ -52,6 +53,7 @@ fun ProfileScreen(
     val isPasswordProvider by viewModel.isPasswordProvider.collectAsState()
 
     var dialogState by remember { mutableStateOf<ProfileDialogState>(ProfileDialogState.None) }
+    var showCountryPicker by remember { mutableStateOf(false) }
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
@@ -139,7 +141,9 @@ fun ProfileScreen(
                 headlineContent = { Text(drawerText.country) },
                 supportingContent = { Text(user?.country ?: "TR") },
                 leadingContent = { Icon(Icons.Default.LocationOn, contentDescription = null) },
-                modifier = Modifier.clickable { dialogState = ProfileDialogState.Region }
+                modifier = Modifier.clickable {
+                    showCountryPicker = true
+                }
             )
 
             // Para birimi artık tıklanamaz, sadece bilgi amaçlı
@@ -191,42 +195,15 @@ fun ProfileScreen(
         }
     }
 
-    // SelectionDialogs'u sadece ülke seçimi için kullanacağız
-    if (dialogState is ProfileDialogState.Region) {
-        AlertDialog(
-            onDismissRequest = { dialogState = ProfileDialogState.None },
-            title = { Text(if (language == Language.TURKISH) "Ülke Seç" else "Select Country") },
-            text = {
-                LazyColumn {
-                    items(
-                        items = CountryCurrencyManager.getCountryList(language),
-                        key = { country -> country.code }
-                    ) { country ->
-                        ListItem(
-                            headlineContent = { Text(country.name) },
-                            supportingContent = {
-                                Text(
-                                    "${country.currencyName} (${country.currencySymbol})"
-                                )
-                            },
-                            leadingContent = {
-                                RadioButton(
-                                    selected = country.code == (user?.country ?: "TR"),
-                                    onClick = {
-                                        viewModel.updateCountry(country.code)
-                                        dialogState = ProfileDialogState.None
-                                    }
-                                )
-                            }
-                        )
-                    }
-                }
+    // Ülke seçim dialog'u
+    if (showCountryPicker) {
+        CountryPickerDialog(
+            onDismiss = { showCountryPicker = false },
+            onCountrySelected = { country ->
+                viewModel.updateUserCountry(country)
+                showCountryPicker = false
             },
-            confirmButton = {
-                TextButton(onClick = { dialogState = ProfileDialogState.None }) {
-                    Text(if (language == Language.TURKISH) "Tamam" else "OK")
-                }
-            }
+            language = language
         )
     }
 
@@ -378,15 +355,21 @@ fun ProfileScreen(
         )
     }
 
-    // Dil seçim dialog'u
+    // Dil seçimi dialog'u
     if (dialogState is ProfileDialogState.Language) {
         AlertDialog(
             onDismissRequest = { dialogState = ProfileDialogState.None },
-            title = { Text("Select Language / Dil Seçin") },
+            title = {
+                Text(if (language == Language.TURKISH) "Dil Seçimi" else "Select Language")
+            },
             text = {
                 Column {
                     ListItem(
                         headlineContent = { Text("Türkçe") },
+                        modifier = Modifier.clickable {
+                            onLanguageChange(Language.TURKISH)
+                            dialogState = ProfileDialogState.None
+                        },
                         leadingContent = {
                             RadioButton(
                                 selected = language == Language.TURKISH,
@@ -399,6 +382,10 @@ fun ProfileScreen(
                     )
                     ListItem(
                         headlineContent = { Text("English") },
+                        modifier = Modifier.clickable {
+                            onLanguageChange(Language.ENGLISH)
+                            dialogState = ProfileDialogState.None
+                        },
                         leadingContent = {
                             RadioButton(
                                 selected = language == Language.ENGLISH,
@@ -413,7 +400,7 @@ fun ProfileScreen(
             },
             confirmButton = {
                 TextButton(onClick = { dialogState = ProfileDialogState.None }) {
-                    Text(if (language == Language.TURKISH) "Tamam" else "OK")
+                    Text(if (language == Language.TURKISH) "İptal" else "Cancel")
                 }
             }
         )

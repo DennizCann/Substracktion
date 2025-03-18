@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 class ProfileViewModel(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository = UserRepository()
 ) : ViewModel() {
     private val _user = MutableStateFlow<User?>(null)
     val user = _user.asStateFlow()
@@ -84,6 +84,24 @@ class ProfileViewModel(
         }
     }
 
+    fun updateUserCountry(country: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                userRepository.updateUserCountry(country)
+                    .onSuccess {
+                        _error.value = null
+                    }
+                    .onFailure { e ->
+                        _error.value = e.message
+                    }
+            } catch (e: Exception) {
+                _error.value = e.message
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
 
     fun updateNotifications(enabled: Boolean) {
         viewModelScope.launch {

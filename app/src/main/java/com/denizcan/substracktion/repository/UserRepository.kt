@@ -3,45 +3,71 @@ package com.denizcan.substracktion.repository
 import android.net.Uri
 import android.util.Log
 import com.denizcan.substracktion.model.User
-import com.denizcan.substracktion.util.snapshotFlow
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.callbackFlow
 
 class UserRepository(
-    val auth: FirebaseAuth = FirebaseAuth.getInstance(),
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
 ) {
     private val usersCollection = firestore.collection("users")
 
-
-    // Kullanıcı profilini getir - performans iyileştirmesi
-    fun getUserProfile(): Flow<User?> {
-        val currentUser = auth.currentUser ?: return flowOf(null)
+    // Kullanıcı profilini getir
+    fun getUserProfile(): Flow<User?> = callbackFlow {
+        val userId = auth.currentUser?.uid ?: throw IllegalStateException("User not logged in")
         
-        return usersCollection.document(currentUser.uid)
-            .snapshotFlow()
-            .map { snapshot -> snapshot.toObject(User::class.java) }
-            .catch { emit(null) }
+        val listener = usersCollection.document(userId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                
+                val user = snapshot?.toObject(User::class.java)
+                trySend(user)
+            }
+            
+        awaitClose { listener.remove() }
     }
 
-    // Kullanıcı bilgilerini güncelle - performans iyileştirmesi
-    suspend fun updateUser(updates: Map<String, Any>) {
-        try {
-            val currentUser = auth.currentUser ?: return
-            usersCollection.document(currentUser.uid)
-                .update(updates)
-                .await()
-        } catch (e: Exception) {
-            // Hata durumunda sessizce devam et
-        }
+    // Kullanıcı profilini güncelle
+    suspend fun updateUserProfile(updates: Map<String, Any>): Result<Unit> = try {
+        val userId = auth.currentUser?.uid ?: throw IllegalStateException("User not logged in")
+        
+        usersCollection.document(userId)
+            .update(updates)
+            .await()
+            
+        Result.success(Unit)
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+
+    // Genel güncelleme fonksiyonu
+    suspend fun updateUser(updates: Map<String, Any>): Result<Unit> = try {
+        val userId = auth.currentUser?.uid ?: throw IllegalStateException("User not logged in")
+        
+        usersCollection.document(userId)
+            .update(updates)
+            .await()
+            
+        Result.success(Unit)
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+
+    // Ülke güncelleme fonksiyonu
+    suspend fun updateUserCountry(country: String): Result<Unit> = try {
+        updateUser(mapOf("country" to country.uppercase()))
+    } catch (e: Exception) {
+        Result.failure(e)
     }
 
     // İlk profili oluştur - performans iyileştirmesi

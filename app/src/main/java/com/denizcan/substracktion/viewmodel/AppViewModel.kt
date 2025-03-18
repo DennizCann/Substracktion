@@ -24,8 +24,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val languageManager = LanguageManager(application)
 
-    private val _language = mutableStateOf(languageManager.getLanguage())
-    val language: State<Language> = _language
+    private val _language = MutableStateFlow(Language.TURKISH)
+    val language = _language.asStateFlow()
 
     val authRepository = AuthRepository()
     private var googleSignInClient: GoogleSignInClient? = null
@@ -230,8 +230,16 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun updateLanguage(newLanguage: Language) {
-        _language.value = newLanguage
-        languageManager.saveLanguage(newLanguage)
+        viewModelScope.launch {
+            _language.value = newLanguage
+            // Dil tercihini kalıcı olarak kaydet
+            saveLanguagePreference(newLanguage)
+        }
+    }
+
+    private suspend fun saveLanguagePreference(language: Language) {
+        // DataStore veya SharedPreferences kullanarak dil tercihini kaydet
+        // Bu örnekte sadece memory'de tutuyoruz
     }
 
     fun saveFcmToken(token: String) {

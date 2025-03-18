@@ -24,6 +24,18 @@ import coil.compose.AsyncImage
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import com.denizcan.substracktion.util.CountryCurrencyManager
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+
+// Tüm dialog state'lerini tek bir sealed class'ta toplayabiliriz
+sealed class ProfileDialogState {
+    object None : ProfileDialogState()
+    object Region : ProfileDialogState()
+    object EditName : ProfileDialogState()
+    object DeleteAccount : ProfileDialogState()
+    object DeleteAccountConfirm : ProfileDialogState()
+    object Language : ProfileDialogState()
+    object DeleteAccountEmailSent : ProfileDialogState()
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,14 +49,9 @@ fun ProfileScreen(
     val user by viewModel.user.collectAsState()
     val drawerText = remember(language) { UiText.getDrawerText(language) }
     val commonText = remember(language) { UiText.getCommonText(language) }
-    val isEmailVerified by viewModel.isEmailVerified.collectAsState()
-    val verificationEmailSent by viewModel.verificationEmailSent.collectAsState()
     val isPasswordProvider by viewModel.isPasswordProvider.collectAsState()
 
-    var showRegionDialog by remember { mutableStateOf(false) }
-    var showEditNameDialog by remember { mutableStateOf(false) }
-    var showDeleteAccountDialog by remember { mutableStateOf(false) }
-    var showLanguageDialog by remember { mutableStateOf(false) }
+    var dialogState by remember { mutableStateOf<ProfileDialogState>(ProfileDialogState.None) }
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
@@ -85,7 +92,7 @@ fun ProfileScreen(
                 displayName = user?.displayName ?: "",
                 email = user?.email ?: "",
                 photoUrl = user?.photoUrl,
-                onEditNameClick = { showEditNameDialog = true },
+                onEditNameClick = { dialogState = ProfileDialogState.EditName },
                 onPhotoClick = {
                     photoPickerLauncher.launch(
                         PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
@@ -119,7 +126,7 @@ fun ProfileScreen(
                 },
                 trailingContent = {
                     Switch(
-                        checked = user?.notificationsEnabled ?: false,
+                        checked = user?.notificationsEnabled == true,
                         onCheckedChange = { viewModel.updateNotifications(it) }
                     )
                 }
@@ -132,7 +139,7 @@ fun ProfileScreen(
                 headlineContent = { Text(drawerText.country) },
                 supportingContent = { Text(user?.country ?: "TR") },
                 leadingContent = { Icon(Icons.Default.LocationOn, contentDescription = null) },
-                modifier = Modifier.clickable { showRegionDialog = true }
+                modifier = Modifier.clickable { dialogState = ProfileDialogState.Region }
             )
 
             // Para birimi artık tıklanamaz, sadece bilgi amaçlı
@@ -159,54 +166,10 @@ fun ProfileScreen(
                 leadingContent = {
                     Icon(Icons.Default.Language, contentDescription = null)
                 },
-                modifier = Modifier.clickable { showLanguageDialog = true }
+                modifier = Modifier.clickable { dialogState = ProfileDialogState.Language }
             )
 
             Divider()
-
-            // E-posta doğrulama durumu - sadece e-posta/şifre ile giriş yapanlar için göster
-            if (!isEmailVerified && isPasswordProvider) {
-                ListItem(
-                    headlineContent = { 
-                        Text(
-                            if (language == Language.TURKISH)
-                                "E-posta Doğrulama"
-                            else
-                                "Email Verification"
-                        )
-                    },
-                    supportingContent = {
-                        Text(
-                            if (language == Language.TURKISH)
-                                "E-posta adresiniz doğrulanmamış"
-                            else
-                                "Your email is not verified"
-                        )
-                    },
-                    leadingContent = {
-                        Icon(
-                            imageVector = Icons.Default.Warning,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.error
-                        )
-                    },
-                    trailingContent = {
-                        TextButton(
-                            onClick = { viewModel.sendVerificationEmail() },
-                            enabled = !verificationEmailSent
-                        ) {
-                            Text(
-                                if (language == Language.TURKISH)
-                                    if (verificationEmailSent) "Gönderildi" else "Doğrula"
-                                else
-                                    if (verificationEmailSent) "Sent" else "Verify"
-                            )
-                        }
-                    }
-                )
-
-                Divider()
-            }
 
             // Hesap Silme
             ListItem(
@@ -223,19 +186,22 @@ fun ProfileScreen(
                         contentDescription = null
                     )
                 },
-                modifier = Modifier.clickable { showDeleteAccountDialog = true }
+                modifier = Modifier.clickable { dialogState = ProfileDialogState.DeleteAccount }
             )
         }
     }
 
     // SelectionDialogs'u sadece ülke seçimi için kullanacağız
-    if (showRegionDialog) {
+    if (dialogState is ProfileDialogState.Region) {
         AlertDialog(
-            onDismissRequest = { showRegionDialog = false },
+            onDismissRequest = { dialogState = ProfileDialogState.None },
             title = { Text(if (language == Language.TURKISH) "Ülke Seç" else "Select Country") },
             text = {
                 LazyColumn {
-                    items(CountryCurrencyManager.getCountryList(language)) { country ->
+                    items(
+                        items = CountryCurrencyManager.getCountryList(language),
+                        key = { country -> country.code }
+                    ) { country ->
                         ListItem(
                             headlineContent = { Text(country.name) },
                             supportingContent = {
@@ -248,7 +214,7 @@ fun ProfileScreen(
                                     selected = country.code == (user?.country ?: "TR"),
                                     onClick = {
                                         viewModel.updateCountry(country.code)
-                                        showRegionDialog = false
+                                        dialogState = ProfileDialogState.None
                                     }
                                 )
                             }
@@ -257,7 +223,7 @@ fun ProfileScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showRegionDialog = false }) {
+                TextButton(onClick = { dialogState = ProfileDialogState.None }) {
                     Text(if (language == Language.TURKISH) "Tamam" else "OK")
                 }
             }
@@ -265,22 +231,22 @@ fun ProfileScreen(
     }
 
     // İsim değiştirme dialog'u
-    if (showEditNameDialog) {
+    if (dialogState is ProfileDialogState.EditName) {
         EditNameDialog(
             currentName = user?.displayName ?: "",
-            onDismiss = { showEditNameDialog = false },
+            onDismiss = { dialogState = ProfileDialogState.None },
             onNameChange = { newName ->
                 viewModel.updateDisplayName(newName)
-                showEditNameDialog = false
+                dialogState = ProfileDialogState.None
             },
             language = language
         )
     }
 
     // Hesap silme dialog'u
-    if (showDeleteAccountDialog) {
+    if (dialogState is ProfileDialogState.DeleteAccount) {
         AlertDialog(
-            onDismissRequest = { showDeleteAccountDialog = false },
+            onDismissRequest = { dialogState = ProfileDialogState.None },
             title = {
                 Text(
                     if (language == Language.TURKISH)
@@ -299,11 +265,99 @@ fun ProfileScreen(
             },
             confirmButton = {
                 TextButton(
+                    onClick = { 
+                        if (isPasswordProvider) {
+                            dialogState = ProfileDialogState.DeleteAccountConfirm
+                        } else {
+                            // Google hesabı için e-posta doğrulaması gönder
+                            viewModel.sendGoogleAccountDeletionEmail(
+                                onEmailSent = {
+                                    dialogState = ProfileDialogState.DeleteAccountEmailSent
+                                },
+                                onError = {
+                                    // Hata durumunu göster
+                                }
+                            )
+                        }
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text(
+                        if (language == Language.TURKISH) 
+                            "Devam Et"
+                        else 
+                            "Continue"
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { dialogState = ProfileDialogState.None }) {
+                    Text(commonText.cancel)
+                }
+            }
+        )
+    }
+
+    // Şifre doğrulama dialog'u
+    if (dialogState is ProfileDialogState.DeleteAccountConfirm) {
+        var password by remember { mutableStateOf("") }
+        var showError by remember { mutableStateOf(false) }
+
+        AlertDialog(
+            onDismissRequest = { dialogState = ProfileDialogState.None },
+            title = {
+                Text(
+                    if (language == Language.TURKISH)
+                        "Şifrenizi Doğrulayın"
+                    else
+                        "Confirm Your Password"
+                )
+            },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = { 
+                            password = it
+                            showError = false 
+                        },
+                        label = {
+                            Text(
+                                if (language == Language.TURKISH)
+                                    "Şifre"
+                                else
+                                    "Password"
+                            )
+                        },
+                        visualTransformation = PasswordVisualTransformation(),
+                        isError = showError,
+                        supportingText = if (showError) {
+                            {
+                                Text(
+                                    if (language == Language.TURKISH)
+                                        "Hatalı şifre"
+                                    else
+                                        "Incorrect password",
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        } else null
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
                     onClick = {
-                        viewModel.deleteAccount(
+                        viewModel.deleteAccountWithPassword(
+                            password = password,
                             onSuccess = {
-                                showDeleteAccountDialog = false
+                                dialogState = ProfileDialogState.None
                                 onDeleteAccountClick()
+                            },
+                            onError = {
+                                showError = true
                             }
                         )
                     },
@@ -317,7 +371,7 @@ fun ProfileScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteAccountDialog = false }) {
+                TextButton(onClick = { dialogState = ProfileDialogState.None }) {
                     Text(commonText.cancel)
                 }
             }
@@ -325,9 +379,9 @@ fun ProfileScreen(
     }
 
     // Dil seçim dialog'u
-    if (showLanguageDialog) {
+    if (dialogState is ProfileDialogState.Language) {
         AlertDialog(
-            onDismissRequest = { showLanguageDialog = false },
+            onDismissRequest = { dialogState = ProfileDialogState.None },
             title = { Text("Select Language / Dil Seçin") },
             text = {
                 Column {
@@ -338,7 +392,7 @@ fun ProfileScreen(
                                 selected = language == Language.TURKISH,
                                 onClick = {
                                     onLanguageChange(Language.TURKISH)
-                                    showLanguageDialog = false
+                                    dialogState = ProfileDialogState.None
                                 }
                             )
                         }
@@ -350,7 +404,7 @@ fun ProfileScreen(
                                 selected = language == Language.ENGLISH,
                                 onClick = {
                                     onLanguageChange(Language.ENGLISH)
-                                    showLanguageDialog = false
+                                    dialogState = ProfileDialogState.None
                                 }
                             )
                         }
@@ -358,17 +412,17 @@ fun ProfileScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showLanguageDialog = false }) {
+                TextButton(onClick = { dialogState = ProfileDialogState.None }) {
                     Text(if (language == Language.TURKISH) "Tamam" else "OK")
                 }
             }
         )
     }
 
-    // Doğrulama e-postası gönderildi dialog'u
-    if (verificationEmailSent) {
+    // E-posta gönderildi dialog'u
+    if (dialogState is ProfileDialogState.DeleteAccountEmailSent) {
         AlertDialog(
-            onDismissRequest = { /* Dialog'u kapat */ },
+            onDismissRequest = { dialogState = ProfileDialogState.None },
             title = {
                 Text(
                     if (language == Language.TURKISH)
@@ -380,18 +434,13 @@ fun ProfileScreen(
             text = {
                 Text(
                     if (language == Language.TURKISH)
-                        "Lütfen e-posta adresinizi kontrol edin ve doğrulama bağlantısına tıklayın."
+                        "Hesabınızı silmek için e-posta adresinize gönderilen bağlantıya tıklayın."
                     else
-                        "Please check your email and click the verification link."
+                        "Please check your email and click the link to delete your account."
                 )
             },
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.refreshEmailVerificationStatus()
-                        /* Dialog'u kapat */
-                    }
-                ) {
+                TextButton(onClick = { dialogState = ProfileDialogState.None }) {
                     Text(if (language == Language.TURKISH) "Tamam" else "OK")
                 }
             }
@@ -467,4 +516,4 @@ private fun UserProfileHeader(
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         )
     }
-} 
+}

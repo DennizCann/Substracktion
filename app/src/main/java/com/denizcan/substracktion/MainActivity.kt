@@ -17,7 +17,6 @@ import androidx.lifecycle.ViewModelProvider
 import com.denizcan.substracktion.theme.SubstracktionTheme
 import com.denizcan.substracktion.util.NotificationHelper
 import com.google.firebase.messaging.FirebaseMessaging
-import android.content.pm.PackageManager
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -25,6 +24,17 @@ import androidx.compose.ui.Modifier
 
 class MainActivity : ComponentActivity() {
     private lateinit var appViewModel: AppViewModel
+
+    // Bildirim izni için launcher
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            println("Bildirim izni verildi")
+        } else {
+            println("Bildirim izni reddedildi")
+        }
+    }
 
     private val googleSignInLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -55,7 +65,8 @@ class MainActivity : ComponentActivity() {
 
         // Bildirim izinlerini kontrol et
         if (!NotificationHelper.checkNotificationPermission(this)) {
-            NotificationHelper.requestNotificationPermission(this)
+            // Yeni API ile izin iste
+            requestPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
         }
 
         setContent {
@@ -93,25 +104,6 @@ class MainActivity : ComponentActivity() {
                             googleSignInLauncher.launch(appViewModel.getGoogleSignInIntent())
                         }
                     )
-                }
-            }
-        }
-    }
-
-    // İzin sonucunu işle
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-
-        when (requestCode) {
-            NotificationHelper.NOTIFICATION_PERMISSION_CODE -> {
-                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    println("Bildirim izni verildi")
-                } else {
-                    println("Bildirim izni reddedildi")
                 }
             }
         }

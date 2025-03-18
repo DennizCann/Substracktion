@@ -21,6 +21,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.denizcan.substracktion.R
+import com.denizcan.substracktion.util.EmailValidator
 import com.denizcan.substracktion.util.Language
 import com.denizcan.substracktion.util.UiText
 

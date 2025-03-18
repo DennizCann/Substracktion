@@ -1,6 +1,7 @@
 package com.denizcan.substracktion.repository
 
 import android.net.Uri
+import android.util.Log
 import com.denizcan.substracktion.model.User
 import com.denizcan.substracktion.util.snapshotFlow
 import com.google.firebase.auth.FirebaseAuth
@@ -83,11 +84,25 @@ class UserRepository(
         return withContext(Dispatchers.IO) {
             try {
                 // Fotoğrafı yükle
-                // Download URL'ini al
+                photoRef.putFile(uri).await()
+                // Download URL'ini al ve döndür
                 photoRef.downloadUrl.await().toString()
             } catch (e: Exception) {
+                Log.e("UserRepository", "Profil fotoğrafı yükleme hatası", e)
                 throw e
             }
+        }
+    }
+
+    suspend fun deleteProfilePhoto(photoUrl: Uri) {
+        try {
+            // Firebase Storage referansını URL'den al
+            val storageRef = FirebaseStorage.getInstance().getReferenceFromUrl(photoUrl.toString())
+            // Fotoğrafı sil
+            storageRef.delete().await()
+        } catch (e: Exception) {
+            Log.e("UserRepository", "Profil fotoğrafı silme hatası", e)
+            throw e
         }
     }
 } 

@@ -113,7 +113,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 }
 
                 // E-posta doğrulanmışsa giriş işlemine devam et
-                user.reload()?.await()
+                user.reload().await()
                 val userInfo = auth.currentUser
                 println("DEBUG: Sign in successful - Email: ${userInfo?.email}, UID: ${userInfo?.uid}, Name: ${userInfo?.displayName}")
                 _userName.value = userInfo?.displayName ?: "Kullanıcı"

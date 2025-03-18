@@ -95,15 +95,6 @@ sealed class UiText {
         val backToHome: String
     )
 
-    data class PrivacyPolicyText(
-        val title: String,
-        val content: String,
-        val ok: String,
-        val privacyPolicy: String,
-        val termsOfService: String,
-        val and: String
-    )
-
     data class NotificationsText(
         val title: String,
         val noNotifications: String,
@@ -112,18 +103,6 @@ sealed class UiText {
         val minutesAgo: String,
         val hoursAgo: String,
         val daysAgo: String
-    )
-
-    data class ProfileText(
-        val regionSettings: String,
-        val region: String,
-        val currency: String,
-        val notificationSettings: String,
-        val notifications: String,
-        val emailNotifications: String,
-        val appSettings: String,
-        val languageSettings: String,
-        val darkMode: String
     )
 
     data class CommonText(
@@ -372,47 +351,6 @@ sealed class UiText {
             }
         }
 
-        fun getPrivacyPolicyText(language: Language): PrivacyPolicyText {
-            return when (language) {
-                Language.ENGLISH -> PrivacyPolicyText(
-                    title = "Privacy & Terms",
-                    content = """
-                        We only collect essential information:
-                        • Email for authentication
-                        • Subscription data you provide
-                        
-                        Your data is:
-                        • Stored securely
-                        • Never shared with third parties
-                        • Only used to provide service
-                        • Deletable upon request
-                    """.trimIndent(),
-                    ok = "OK",
-                    privacyPolicy = "Privacy Policy",
-                    termsOfService = "Terms of Service",
-                    and = "and"
-                )
-                Language.TURKISH -> PrivacyPolicyText(
-                    title = "Gizlilik ve Koşullar",
-                    content = """
-                        Sadece gerekli bilgileri topluyoruz:
-                        • Kimlik doğrulama için e-posta
-                        • Sizin girdiğiniz abonelik verileri
-                        
-                        Verileriniz:
-                        • Güvenle saklanır
-                        • Üçüncü taraflarla paylaşılmaz
-                        • Sadece hizmet sunmak için kullanılır
-                        • İsteğiniz üzerine silinebilir
-                    """.trimIndent(),
-                    ok = "Tamam",
-                    privacyPolicy = "Gizlilik Politikası",
-                    termsOfService = "Kullanım Koşulları",
-                    and = "ve"
-                )
-            }
-        }
-
         fun getNotificationsText(language: Language): NotificationsText {
             return when (language) {
                 Language.ENGLISH -> NotificationsText(
@@ -432,33 +370,6 @@ sealed class UiText {
                     minutesAgo = "%d dakika önce",
                     hoursAgo = "%d saat önce",
                     daysAgo = "%d gün önce"
-                )
-            }
-        }
-
-        fun getProfileText(language: Language): ProfileText {
-            return when (language) {
-                Language.TURKISH -> ProfileText(
-                    regionSettings = "Bölge Ayarları",
-                    region = "Bölge",
-                    currency = "Para Birimi",
-                    notificationSettings = "Bildirim Ayarları",
-                    notifications = "Bildirimler",
-                    emailNotifications = "E-posta Bildirimleri",
-                    appSettings = "Uygulama Ayarları",
-                    languageSettings = "Dil",
-                    darkMode = "Karanlık Mod"
-                )
-                Language.ENGLISH -> ProfileText(
-                    regionSettings = "Region Settings",
-                    region = "Region",
-                    currency = "Currency",
-                    notificationSettings = "Notification Settings",
-                    notifications = "Notifications",
-                    emailNotifications = "Email Notifications",
-                    appSettings = "App Settings",
-                    languageSettings = "Language",
-                    darkMode = "Dark Mode"
                 )
             }
         }

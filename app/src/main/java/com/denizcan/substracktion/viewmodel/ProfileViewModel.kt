@@ -1,15 +1,19 @@
 package com.denizcan.substracktion.viewmodel
 
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.denizcan.substracktion.model.User
 import com.denizcan.substracktion.repository.UserRepository
 import com.denizcan.substracktion.util.CountryCurrencyManager
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.actionCodeSettings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class ProfileViewModel(
     private val userRepository: UserRepository
@@ -25,14 +29,6 @@ class ProfileViewModel(
 
     private val auth = FirebaseAuth.getInstance()
 
-    // E-posta doğrulama durumu
-    private val _isEmailVerified = MutableStateFlow(false)
-    val isEmailVerified = _isEmailVerified.asStateFlow()
-
-    // Doğrulama e-postası gönderme durumu
-    private val _verificationEmailSent = MutableStateFlow(false)
-    val verificationEmailSent = _verificationEmailSent.asStateFlow()
-
     // Firebase auth provider kontrolü için
     private val _isPasswordProvider = MutableStateFlow(false)
     val isPasswordProvider = _isPasswordProvider.asStateFlow()
@@ -44,13 +40,6 @@ class ProfileViewModel(
         auth.currentUser?.let { user ->
             val providers = user.providerData.map { it.providerId }
             _isPasswordProvider.value = providers.contains("password")
-            
-            if (_isPasswordProvider.value) {
-                _isEmailVerified.value = user.isEmailVerified
-            } else {
-                // Google ile giriş yapan kullanıcılar için doğrulanmış kabul et
-                _isEmailVerified.value = true
-            }
         }
     }
 
@@ -125,21 +114,6 @@ class ProfileViewModel(
         }
     }
 
-    fun deleteAccount(onSuccess: () -> Unit) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            try {
-                userRepository.deleteAccount()
-                _error.value = null
-                onSuccess()
-            } catch (e: Exception) {
-                _error.value = e.message
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
-
     fun uploadProfilePhoto(uri: Uri) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -156,20 +130,75 @@ class ProfileViewModel(
         }
     }
 
-    // Doğrulama e-postası gönder
-    fun sendVerificationEmail() {
-        auth.currentUser?.sendEmailVerification()?.addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                _verificationEmailSent.value = true
+    fun deleteAccountWithPassword(
+        password: String,
+        onSuccess: () -> Unit,
+        onError: () -> Unit
+    ) {
+        viewModelScope.launch {
+            try {
+                // Mevcut kullanıcıyı al
+                val user = auth.currentUser ?: return@launch
+                
+                // Kullanıcının email'ini al
+                val email = user.email ?: return@launch
+                
+                // Kullanıcının kimlik bilgilerini yeniden doğrula
+                val credential = EmailAuthProvider.getCredential(email, password)
+                
+                // Yeniden kimlik doğrulama
+                user.reauthenticate(credential).await()
+                
+                // Firestore'dan kullanıcı verilerini sil
+                userRepository.deleteAccount()
+                
+                // Firebase Storage'dan profil fotoğrafını sil
+                user.photoUrl?.let { photoUrl ->
+                    userRepository.deleteProfilePhoto(photoUrl)
+                }
+                
+                // Firebase Auth'dan hesabı sil
+                user.delete().await()
+                
+                // Başarılı callback'i çağır
+                onSuccess()
+                
+            } catch (e: Exception) {
+                // Hata durumunda error callback'i çağır
+                onError()
+                Log.e("ProfileViewModel", "Hesap silme hatası", e)
             }
         }
     }
 
-    // E-posta doğrulama durumunu yenile
-    fun refreshEmailVerificationStatus() {
-        auth.currentUser?.reload()?.addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                _isEmailVerified.value = auth.currentUser?.isEmailVerified ?: false
+    fun sendGoogleAccountDeletionEmail(onEmailSent: () -> Unit, onError: () -> Unit) {
+        viewModelScope.launch {
+            try {
+                val user = auth.currentUser ?: return@launch
+                val email = user.email ?: return@launch
+                
+                // Kullanıcının e-posta adresine doğrulama kodu gönder
+                auth.sendSignInLinkToEmail(
+                    email,
+                    actionCodeSettings {
+                        url = "substracktion.app/deleteAccount" // Deep link URL'iniz
+                        handleCodeInApp = true
+                        setAndroidPackageName(
+                            "com.denizcan.substracktion",
+                            true, // installIfNotAvailable
+                            null // minimumVersion
+                        )
+                    }
+                ).addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        onEmailSent()
+                    } else {
+                        onError()
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("ProfileViewModel", "Doğrulama e-postası gönderme hatası", e)
+                onError()
             }
         }
     }

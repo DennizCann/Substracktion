@@ -25,6 +25,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.denizcan.substracktion.R
+import com.denizcan.substracktion.util.EmailValidator
 import com.denizcan.substracktion.util.Language
 import com.denizcan.substracktion.util.UiText
 import com.denizcan.substracktion.viewmodel.AppViewModel
@@ -282,6 +283,19 @@ fun EmailSignInScreen(
                         enabled = !isLoading && email.isNotEmpty() && password.isNotEmpty()
                     ) {
                         Text(text.signIn)
+                    }
+
+                    // Kayıt ol butonu ekleyelim
+                    TextButton(
+                        onClick = onNavigateToRegister,
+                        enabled = !isLoading
+                    ) {
+                        Text(
+                            if (language == Language.TURKISH)
+                                "Hesabınız yok mu? Kayıt olun"
+                            else
+                                "Don't have an account? Sign up"
+                        )
                     }
                 }
             }

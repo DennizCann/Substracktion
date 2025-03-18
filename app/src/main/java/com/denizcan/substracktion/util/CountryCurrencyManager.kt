@@ -68,35 +68,12 @@ object CountryCurrencyManager {
     }
 
     fun getCurrencyForCountry(countryCode: String): String {
-        return try {
-            Currency.getInstance(Locale("", countryCode)).currencyCode
-        } catch (e: Exception) {
-            "USD" // Varsayılan olarak USD
-        }
-    }
-
-    fun getCountryForCurrency(currencyCode: String): String {
-        return when (currencyCode) {
-            "TRY" -> "TR"
-            "USD" -> "US"
-            "EUR" -> "EU"
-            "GBP" -> "GB"
-            "JPY" -> "JP"
-            "CNY" -> "CN"
-            "RUB" -> "RU"
-            "AED" -> "AE"
-            "SAR" -> "SA"
-            "CHF" -> "CH"
-            "AUD" -> "AU"
-            "CAD" -> "CA"
-            "NZD" -> "NZ"
-            "SGD" -> "SG"
-            "HKD" -> "HK"
-            "KRW" -> "KR"
-            "INR" -> "IN"
-            "BRL" -> "BR"
-            "ZAR" -> "ZA"
-            else -> "US" // Varsayılan olarak US
+        return when (countryCode) {
+            "TR" -> "TRY"
+            "US" -> "USD"
+            "GB" -> "GBP"
+            "EU" -> "EUR"
+            else -> "TRY"
         }
     }
 } 

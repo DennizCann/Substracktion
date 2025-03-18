@@ -9,26 +9,16 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
 object NotificationHelper {
+    const val NOTIFICATION_PERMISSION_CODE = 123
+
     fun checkNotificationPermission(context: Context): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ContextCompat.checkSelfPermission(
                 context,
-                Manifest.permission.POST_NOTIFICATIONS
+                android.Manifest.permission.POST_NOTIFICATIONS
             ) == PackageManager.PERMISSION_GRANTED
         } else {
             true
         }
     }
-
-    fun requestNotificationPermission(activity: Activity) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            ActivityCompat.requestPermissions(
-                activity,
-                arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                NOTIFICATION_PERMISSION_CODE
-            )
-        }
-    }
-
-    const val NOTIFICATION_PERMISSION_CODE = 123
 } 
